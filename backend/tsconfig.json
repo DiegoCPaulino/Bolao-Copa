@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    // Alvo moderno suportado pelo Node 24.
+    "target": "ES2023",
+    "lib": ["ES2023"],
+
+    // ESM real de Node: resolução por NodeNext (exige extensão .js em imports relativos).
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+
+    // O compilador trabalhando a nosso favor (arquitetura §4.1).
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    // Fase 0: tsc é só checador de tipos. A config de build (outDir, emit) entra na Fase 4.
+    "noEmit": true
+  },
+  "include": ["src", "tests", "vitest.config.ts"]
+}
