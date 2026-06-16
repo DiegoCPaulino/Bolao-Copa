@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend — check, typecheck, test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configura Node
+        uses: actions/setup-node@v4
+        with:
+          # Fonte única da versão: backend/.nvmrc (mesma usada localmente).
+          node-version-file: backend/.nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instala dependências
+        run: npm ci
+
+      - name: Lint + format (Biome)
+        run: npm run check
+
+      - name: Typecheck (tsc)
+        run: npm run typecheck
+
+      - name: Testes (Vitest)
+        run: npm test
