@@ -1,0 +1,13 @@
+# Normaliza fim de linha: conteúdo armazenado no git e extraído como LF em
+# todas as plataformas. Mantém Windows (local) e Linux (CI) idênticos e
+# alinhados ao Biome (lineEnding padrão: lf), evitando ruído de CRLF.
+* text=auto eol=lf
+
+# Binários (defensivo, para quando houver assets) — git não deve convertê-los.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
