@@ -215,9 +215,10 @@ over-engineering para o tamanho).
 ```
 .
 ├── CLAUDE.md                                  # este arquivo
-├── documentacao_oficial_bolao.md              # funcional (verdade do comportamento)
-├── documentacao_arquitetura_bolao.md          # arquitetura (verdade da stack)
-├── documentacao_roteiro_desenvolvimento_bolao.md  # roteiro (verdade da ordem)
+├── docs/                                      # documentos-fonte (a verdade detalhada)
+│   ├── documentacao_oficial_bolao.md          # funcional (verdade do comportamento)
+│   ├── documentacao_arquitetura_bolao.md      # arquitetura (verdade da stack)
+│   └── documentacao_roteiro_desenvolvimento_bolao.md  # roteiro (verdade da ordem)
 │
 ├── backend/
 │   ├── src/
