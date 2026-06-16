@@ -1,0 +1,34 @@
+# Dependências
+node_modules/
+
+# Build / artefatos de compilação
+dist/
+build/
+*.tsbuildinfo
+
+# Cobertura de testes
+coverage/
+
+# Variáveis de ambiente / segredos — NUNCA versionar.
+# O .env.example (template, sem segredos) É versionado — ver a negação abaixo.
+.env
+.env.*
+!.env.example
+
+# Banco local (descartável)
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+Thumbs.db
+.DS_Store
+
+# Editores
+.idea/
+.vscode/
+*.swp
