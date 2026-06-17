@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularValorAPagar } from "../../src/domain/pagamento.js";
+import { calcularTotaisPagamento, calcularValorAPagar } from "../../src/domain/pagamento.js";
 
 describe("calcularValorAPagar (regra de indicação — funcional §8.7)", () => {
   // Tabela transcrita direto do funcional §8.7: cada indicado direto que entrou
@@ -27,6 +27,49 @@ describe("calcularValorAPagar (regra de indicação — funcional §8.7)", () =>
       { indicados: 15, valor: 5 }, // crua: 40 − 75 = −35
     ])("$indicados indicado(s) → R$ $valor (trava no piso)", ({ indicados, valor }) => {
       expect(calcularValorAPagar(indicados)).toBe(valor);
+    });
+  });
+});
+
+describe("calcularTotaisPagamento (totais do bolão — funcional §8.8)", () => {
+  it("lista vazia → tudo zero", () => {
+    expect(calcularTotaisPagamento([])).toEqual({ esperado: 0, recebido: 0, falta: 0 });
+  });
+
+  it("todos PENDENTE → recebido 0 e falta = esperado", () => {
+    const participantes = [
+      { valorAPagar: 40, status: "PENDENTE" as const },
+      { valorAPagar: 35, status: "PENDENTE" as const },
+    ];
+    expect(calcularTotaisPagamento(participantes)).toEqual({
+      esperado: 75,
+      recebido: 0,
+      falta: 75,
+    });
+  });
+
+  it("todos PAGO → falta 0 e recebido = esperado", () => {
+    const participantes = [
+      { valorAPagar: 40, status: "PAGO" as const },
+      { valorAPagar: 35, status: "PAGO" as const },
+    ];
+    expect(calcularTotaisPagamento(participantes)).toEqual({
+      esperado: 75,
+      recebido: 75,
+      falta: 0,
+    });
+  });
+
+  it("caso misto confere as três somas", () => {
+    const participantes = [
+      { valorAPagar: 40, status: "PAGO" as const },
+      { valorAPagar: 35, status: "PENDENTE" as const },
+      { valorAPagar: 20, status: "PAGO" as const },
+    ];
+    expect(calcularTotaisPagamento(participantes)).toEqual({
+      esperado: 95,
+      recebido: 60,
+      falta: 35,
     });
   });
 });

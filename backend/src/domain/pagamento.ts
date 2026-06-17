@@ -19,3 +19,38 @@ export function calcularValorAPagar(qtdIndicadosDiretos: number): number {
   const valorComDesconto = VALOR_BASE - DESCONTO_POR_INDICACAO * qtdIndicadosDiretos;
   return Math.max(PISO, valorComDesconto);
 }
+
+/** Status de pagamento de um participante — funcional §8.8 (padrão PENDENTE). */
+export type StatusPagamento = "PAGO" | "PENDENTE";
+
+/** Totais agregados do bolão — funcional §8.8. Todos derivados, nunca armazenados. */
+export type TotaisPagamento = {
+  esperado: number;
+  recebido: number;
+  falta: number;
+};
+
+/**
+ * Totais de pagamento do bolão — funcional §8.8:
+ *   esperado = soma do valor a pagar de todos;
+ *   recebido = soma do valor a pagar de quem está PAGO;
+ *   falta    = esperado − recebido.
+ *
+ * Função PURA e derivada (CLAUDE.md §3.1, §7.4). Recebe o `valorAPagar` JÁ
+ * calculado: calcular o valor (com desconto/piso) é responsabilidade separada
+ * de `calcularValorAPagar`; aqui só somamos. O status é apenas informativo e
+ * não toca pontuação nem classificação (§8.8).
+ */
+export function calcularTotaisPagamento(
+  participantes: ReadonlyArray<{ valorAPagar: number; status: StatusPagamento }>,
+): TotaisPagamento {
+  let esperado = 0;
+  let recebido = 0;
+  for (const { valorAPagar, status } of participantes) {
+    esperado += valorAPagar;
+    if (status === "PAGO") {
+      recebido += valorAPagar;
+    }
+  }
+  return { esperado, recebido, falta: esperado - recebido };
+}
