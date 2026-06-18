@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  keycap,
   monoBloco,
   negrito,
+  placarCompacto,
+  placarPorExtenso,
   preencherDireita,
   reais,
 } from "../../../src/domain/whatsapp/formato.js";
@@ -42,6 +45,33 @@ describe("formato (primitivos de formatação WhatsApp)", () => {
     });
     it("não trunca texto maior que a largura", () => {
       expect(preencherDireita("Longo", 3)).toBe("Longo");
+    });
+  });
+
+  describe("keycap", () => {
+    it("usa o emoji keycap de 1 a 9", () => {
+      expect(keycap(1)).toBe("1️⃣");
+      expect(keycap(9)).toBe("9️⃣");
+    });
+    it("usa 🔟 para o 10", () => {
+      expect(keycap(10)).toBe("🔟");
+    });
+    it("cai no número simples acima de 10 (não há keycap limpo p/ 11+)", () => {
+      expect(keycap(11)).toBe("11");
+      expect(keycap(16)).toBe("16");
+    });
+  });
+
+  describe("placarCompacto", () => {
+    it("renderiza 'ExD' sem espaços (palpites)", () => {
+      expect(placarCompacto({ golsEsquerda: 2, golsDireita: 1 })).toBe("2x1");
+      expect(placarCompacto({ golsEsquerda: 0, golsDireita: 0 })).toBe("0x0");
+    });
+  });
+
+  describe("placarPorExtenso", () => {
+    it("renderiza 'E x D' com espaços (placar real)", () => {
+      expect(placarPorExtenso({ golsEsquerda: 2, golsDireita: 1 })).toBe("2 x 1");
     });
   });
 });

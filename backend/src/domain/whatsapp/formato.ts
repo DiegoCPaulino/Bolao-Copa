@@ -1,3 +1,5 @@
+import type { Placar } from "../pontuacao.js";
+
 /**
  * Primitivos de formatação do WhatsApp, compartilhados pelos formatadores de
  * artefato — arquitetura §5.3; CLAUDE.md §3.3.
@@ -42,3 +44,28 @@ export const monoBloco = (texto: string): string => `${CERCA}\n${texto}\n${CERCA
  * de fato dentro de `monoBloco` (largura fixa) e com texto puro (sem emoji).
  */
 export const preencherDireita = (texto: string, largura: number): string => texto.padEnd(largura);
+
+/**
+ * Keycap numérico do WhatsApp para numerar jogos — funcional §12.1.
+ *
+ * EDGE (documentado): o keycap "limpo" só existe de 1️⃣ a 🔟. Acima de 10 (ex.:
+ * 16-avos, com 16 jogos) não há emoji keycap — caímos no número simples para
+ * J11–J16. De 1 a 9 o keycap é "dígito + VS16 + enclosing keycap".
+ */
+export const keycap = (n: number): string => {
+  if (n >= 1 && n <= 9) {
+    return `${n}️⃣`;
+  }
+  if (n === 10) {
+    return "🔟";
+  }
+  return `${n}`;
+};
+
+/** Placar compacto para palpites: "2x1" (funcional §12.2 e §12.3). */
+export const placarCompacto = (placar: Placar): string =>
+  `${placar.golsEsquerda}x${placar.golsDireita}`;
+
+/** Placar "por extenso" do resultado real, com espaços: "2 x 1" (funcional §12.3). */
+export const placarPorExtenso = (placar: Placar): string =>
+  `${placar.golsEsquerda} x ${placar.golsDireita}`;
