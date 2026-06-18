@@ -22,3 +22,23 @@ export const negrito = (texto: string): string => `*${texto}*`;
  * inteiros: base, descontos, piso e somas deles).
  */
 export const reais = (valor: number): string => `R$ ${valor.toLocaleString("pt-BR")}`;
+
+/** Cerca do bloco monoespaçado do WhatsApp (crases triplas). */
+const CERCA = "```";
+
+/**
+ * Bloco monoespaçado do WhatsApp (largura fixa) — funcional §12.
+ *
+ * Em largura fixa, padding com espaços ALINHA colunas. Cuidados (por isso o uso
+ * é restrito): emojis têm largura variável e QUEBRAM o alinhamento, e dentro do
+ * bloco `*negrito*`/`_itálico_` NÃO renderizam (ficam literais) — headers em
+ * negrito devem ficar FORA do bloco.
+ */
+export const monoBloco = (texto: string): string => `${CERCA}\n${texto}\n${CERCA}`;
+
+/**
+ * Preenche `texto` com espaços à direita até `largura` (alinhamento à esquerda).
+ * Texto já maior ou igual à largura é devolvido intacto (não trunca). Só alinha
+ * de fato dentro de `monoBloco` (largura fixa) e com texto puro (sem emoji).
+ */
+export const preencherDireita = (texto: string, largura: number): string => texto.padEnd(largura);
