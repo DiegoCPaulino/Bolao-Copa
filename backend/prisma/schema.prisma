@@ -41,7 +41,7 @@ enum EstadoRodada {
 // Catálogo de seleções (nome + bandeira). Populado por seed (Fatia 3.2).
 model Selecao {
   id       String @id @default(cuid())
-  nome     String
+  nome     String @unique // chave estável p/ upsert idempotente do seed (não há homônimos de seleção)
   bandeira String // emoji da bandeira
 
   // Relações de volta: um jogo aponta para DUAS seleções (posições esquerda e
