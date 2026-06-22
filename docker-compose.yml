@@ -1,0 +1,32 @@
+# Postgres local descartável para DESENVOLVIMENTO — espelha o banco de produção
+# (mesma engine), satisfazendo o roteiro (Fase 3) e a arquitetura (§4.5).
+#
+#   docker compose up -d     # sobe o Postgres em segundo plano (rode da raiz)
+#   docker compose down      # para o container (mantém os dados no volume)
+#   docker compose down -v   # para E apaga o volume (zera o banco)
+#
+# As credenciais abaixo são de desenvolvimento local — não são segredo. A
+# DATABASE_URL do backend (backend/.env) precisa casar com estes valores.
+
+services:
+  db:
+    image: postgres:17-alpine # major fixada (17); estável e recente
+    container_name: bolao-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bolao
+      POSTGRES_PASSWORD: bolao
+      POSTGRES_DB: bolao
+    ports:
+      - "5432:5432" # host:container — mesma porta padrão do Postgres
+    volumes:
+      - bolao-pgdata:/var/lib/postgresql/data # persistência entre `up`/`down`
+    healthcheck:
+      # Deixa o Docker saber quando o banco está pronto para aceitar conexões.
+      test: ["CMD-SHELL", "pg_isready -U bolao -d bolao"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  bolao-pgdata:

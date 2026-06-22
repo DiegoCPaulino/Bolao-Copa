@@ -1,0 +1,114 @@
+// Schema do bolão — tradução fiel do modelo conceitual (funcional §13) para a
+// modelagem física proposta (arquitetura §6).
+//
+// PRINCÍPIO INEGOCIÁVEL (CLAUDE.md §3.1; funcional §13): dados DERIVADOS não
+// viram coluna. Aqui NÃO existem pontos, valorAPagar, posição, placares exatos
+// nem totais — tudo isso é calculado sob demanda pelas funções puras do domínio.
+//
+// Sem índices especulativos (CLAUDE.md §11/§14): o único índice extra é o
+// @@unique do Palpite, que é regra de INTEGRIDADE (um palpite por participante
+// por jogo), não otimização.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StatusPagamento {
+  PAGO
+  PENDENTE
+}
+
+enum FaseRodada {
+  DEZESSEIS_AVOS
+  OITAVAS
+  QUARTAS
+  SEMIFINAIS
+  FINAL
+}
+
+enum EstadoRodada {
+  MONTADA
+  PALPITES_ABERTOS
+  RESULTADOS_EM_ANDAMENTO
+  ENCERRADA
+}
+
+// Catálogo de seleções (nome + bandeira). Populado por seed (Fatia 3.2).
+model Selecao {
+  id       String @id @default(cuid())
+  nome     String
+  bandeira String // emoji da bandeira
+
+  // Relações de volta: um jogo aponta para DUAS seleções (posições esquerda e
+  // direita). São duas relações nomeadas distintas para a mesma tabela.
+  jogosComoEsquerda Jogo[] @relation("SelecaoEsquerda")
+  jogosComoDireita  Jogo[] @relation("SelecaoDireita")
+}
+
+model Participante {
+  id       String          @id @default(cuid())
+  nome     String
+  apelido  String? // opcional — diferencia homônimos
+  status   StatusPagamento @default(PENDENTE)
+  criadoEm DateTime        @default(now())
+
+  // Indicação AUTO-REFERENTE (o ponto mais interessante da modelagem, arq. §4.5):
+  // cada participante tem no máximo um indicador; um indicador tem vários
+  // indicados. FK opcional para Participante — como só se indica quem já está
+  // cadastrado, ela sempre aponta para um registro anterior.
+  indicadorId String?
+  indicador   Participante?  @relation("Indicacao", fields: [indicadorId], references: [id])
+  indicados   Participante[] @relation("Indicacao")
+
+  palpites Palpite[]
+}
+
+model Rodada {
+  id     String       @id @default(cuid())
+  fase   FaseRodada
+  ordem  Int // 1..5 (sequência das rodadas do mata-mata)
+  estado EstadoRodada @default(MONTADA)
+
+  jogos Jogo[]
+}
+
+model Jogo {
+  id    String @id @default(cuid())
+  ordem Int // J1, J2, ... dentro da rodada
+
+  rodadaId String
+  rodada   Rodada @relation(fields: [rodadaId], references: [id])
+
+  // Seleções POSICIONAIS (CLAUDE.md §3.5; funcional §13): esquerda/direita só
+  // importam para o placar (2x1 ≠ 1x2). NÃO representam mando de campo. Por isso
+  // são duas relações nomeadas para a MESMA tabela Selecao, não "casa/fora".
+  selecaoEsquerdaId String
+  selecaoEsquerda   Selecao @relation("SelecaoEsquerda", fields: [selecaoEsquerdaId], references: [id])
+  selecaoDireitaId  String
+  selecaoDireita    Selecao @relation("SelecaoDireita", fields: [selecaoDireitaId], references: [id])
+
+  // Placar real (90 min): NULO até o jogo ter resultado registrado.
+  golsEsquerdaReal Int?
+  golsDireitaReal  Int?
+
+  palpites Palpite[]
+}
+
+model Palpite {
+  id           String @id @default(cuid())
+  golsEsquerda Int
+  golsDireita  Int
+
+  participanteId String
+  participante   Participante @relation(fields: [participanteId], references: [id])
+  jogoId         String
+  jogo           Jogo         @relation(fields: [jogoId], references: [id])
+
+  // Integridade, não performance: um único palpite por participante por jogo.
+  @@unique([participanteId, jogoId])
+}
