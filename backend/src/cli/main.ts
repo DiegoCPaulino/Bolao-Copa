@@ -1,6 +1,7 @@
 import { select } from "@inquirer/prompts";
 import { prisma } from "../config/prisma.js";
 import { ErroDeDominio } from "../domain/erros.js";
+import { menuCatalogo } from "./menus/catalogoMenu.js";
 import { menuPagamentos } from "./menus/pagamentosMenu.js";
 import { menuParticipantes } from "./menus/participantesMenu.js";
 
@@ -24,6 +25,7 @@ async function menuPrincipal(): Promise<void> {
       choices: [
         { name: "Participantes", value: "participantes" },
         { name: "Pagamentos", value: "pagamentos" },
+        { name: "Catálogo de seleções", value: "catalogo" },
         { name: "Sair", value: "sair" },
       ],
     });
@@ -35,6 +37,9 @@ async function menuPrincipal(): Promise<void> {
           break;
         case "pagamentos":
           await menuPagamentos();
+          break;
+        case "catalogo":
+          await menuCatalogo();
           break;
         case "sair":
           sair = true;
