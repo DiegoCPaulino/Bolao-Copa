@@ -19,8 +19,12 @@ export async function bancoDisponivel(): Promise<boolean> {
 
 /** Zera as tabelas tocadas pelos testes, isolando cada caso do anterior. */
 export async function limparBanco(): Promise<void> {
-  // Participante e Selecao são independentes entre si (não há FK ligando os dois).
-  // Quando houver Palpite/Jogo/Rodada, a limpeza respeitará a ordem filhos → pais.
+  // Ordem filhos → pais por causa das FKs (Jogo→Rodada/Selecao são RESTRICT): jogos
+  // antes de rodadas e seleções. Palpite vem primeiro (ainda sem fatia, mas mantém a
+  // ordem correta). Participante é independente.
+  await prisma.palpite.deleteMany();
+  await prisma.jogo.deleteMany();
+  await prisma.rodada.deleteMany();
   await prisma.participante.deleteMany();
   await prisma.selecao.deleteMany();
 }

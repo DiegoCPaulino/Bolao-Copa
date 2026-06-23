@@ -58,3 +58,30 @@ export class IndicacaoInvalida extends ErroDeDominio {
     super(mensagem);
   }
 }
+
+/** Operação referenciou uma rodada (por id) que não existe. */
+export class RodadaNaoEncontrada extends ErroDeDominio {
+  readonly codigo = "RODADA_NAO_ENCONTRADA";
+
+  constructor(public readonly id: string) {
+    super(`Rodada não encontrada (id: ${id}).`);
+  }
+}
+
+/** Um jogo referenciou uma seleção que não está no catálogo. */
+export class SelecaoInvalida extends ErroDeDominio {
+  readonly codigo = "SELECAO_INVALIDA";
+
+  constructor(public readonly id: string) {
+    super(`A seleção selecionada não existe no catálogo (id: ${id}).`);
+  }
+}
+
+/** Jogo malformado (ex.: mesma seleção nos dois lados; rodada sem jogos). */
+export class JogoInvalido extends ErroDeDominio {
+  readonly codigo = "JOGO_INVALIDO";
+
+  constructor(mensagem: string) {
+    super(mensagem);
+  }
+}

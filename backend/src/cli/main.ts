@@ -4,6 +4,7 @@ import { ErroDeDominio } from "../domain/erros.js";
 import { menuCatalogo } from "./menus/catalogoMenu.js";
 import { menuPagamentos } from "./menus/pagamentosMenu.js";
 import { menuParticipantes } from "./menus/participantesMenu.js";
+import { menuRodadas } from "./menus/rodadasMenu.js";
 
 /**
  * Adaptador de TERMINAL (Entrega 1) — o ponto de entrada do sistema (CLAUDE.md §5).
@@ -26,6 +27,7 @@ async function menuPrincipal(): Promise<void> {
         { name: "Participantes", value: "participantes" },
         { name: "Pagamentos", value: "pagamentos" },
         { name: "Catálogo de seleções", value: "catalogo" },
+        { name: "Rodadas e jogos", value: "rodadas" },
         { name: "Sair", value: "sair" },
       ],
     });
@@ -40,6 +42,9 @@ async function menuPrincipal(): Promise<void> {
           break;
         case "catalogo":
           await menuCatalogo();
+          break;
+        case "rodadas":
+          await menuRodadas();
           break;
         case "sair":
           sair = true;
