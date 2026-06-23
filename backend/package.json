@@ -11,9 +11,11 @@
     "format": "biome format --write .",
     "check": "biome check .",
     "typecheck": "tsc --noEmit",
+    "cli": "node --env-file=.env --import tsx src/cli/main.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:db": "node scripts/prepararBancoTeste.mjs",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
@@ -33,6 +35,8 @@
     "vitest": "^4.0.0"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@inquirer/prompts": "^8.5.2",
+    "@prisma/client": "^6.19.3",
+    "zod": "^4.4.3"
   }
 }
