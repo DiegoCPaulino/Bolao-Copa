@@ -1,6 +1,7 @@
 import { select } from "@inquirer/prompts";
 import { prisma } from "../config/prisma.js";
 import { ErroDeDominio } from "../domain/erros.js";
+import { menuPagamentos } from "./menus/pagamentosMenu.js";
 import { menuParticipantes } from "./menus/participantesMenu.js";
 
 /**
@@ -22,6 +23,7 @@ async function menuPrincipal(): Promise<void> {
       message: "Bolão Copa 2026 — menu principal",
       choices: [
         { name: "Participantes", value: "participantes" },
+        { name: "Pagamentos", value: "pagamentos" },
         { name: "Sair", value: "sair" },
       ],
     });
@@ -30,6 +32,9 @@ async function menuPrincipal(): Promise<void> {
       switch (opcao) {
         case "participantes":
           await menuParticipantes();
+          break;
+        case "pagamentos":
+          await menuPagamentos();
           break;
         case "sair":
           sair = true;

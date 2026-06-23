@@ -61,6 +61,23 @@ export function buscarPorId(id: string): Promise<Participante | null> {
   return prisma.participante.findUnique({ where: { id } });
 }
 
+/**
+ * Todos os participantes na forma crua (sem o grafo de indicador), ordenados por
+ * nome — é o insumo dos cálculos DERIVADOS de pagamento (valor a pagar e totais).
+ * Cada linha já traz `indicadorId` e `status`; quem deriva é o serviço.
+ */
+export function listarTodos(): Promise<Participante[]> {
+  return prisma.participante.findMany({ orderBy: { nome: "asc" } });
+}
+
+/**
+ * Atualiza SÓ o status de pagamento. É o único dado de pagamento que se escreve —
+ * valor a pagar e totais são derivados, nunca colunas (CLAUDE.md §3.2).
+ */
+export function atualizarStatus(id: string, status: StatusPagamento): Promise<Participante> {
+  return prisma.participante.update({ where: { id }, data: { status } });
+}
+
 export function atualizar(id: string, dados: DadosGravaveis): Promise<Participante> {
   return prisma.participante.update({ where: { id }, data: dados });
 }
