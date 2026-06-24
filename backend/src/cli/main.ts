@@ -5,6 +5,7 @@ import { menuCatalogo } from "./menus/catalogoMenu.js";
 import { menuPagamentos } from "./menus/pagamentosMenu.js";
 import { menuPalpites } from "./menus/palpitesMenu.js";
 import { menuParticipantes } from "./menus/participantesMenu.js";
+import { menuResultados } from "./menus/resultadosMenu.js";
 import { menuRodadas } from "./menus/rodadasMenu.js";
 
 /**
@@ -30,6 +31,7 @@ async function menuPrincipal(): Promise<void> {
         { name: "Catálogo de seleções", value: "catalogo" },
         { name: "Rodadas e jogos", value: "rodadas" },
         { name: "Palpites", value: "palpites" },
+        { name: "Resultados e pontuação", value: "resultados" },
         { name: "Sair", value: "sair" },
       ],
     });
@@ -50,6 +52,9 @@ async function menuPrincipal(): Promise<void> {
           break;
         case "palpites":
           await menuPalpites();
+          break;
+        case "resultados":
+          await menuResultados();
           break;
         case "sair":
           sair = true;

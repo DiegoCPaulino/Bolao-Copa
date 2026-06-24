@@ -68,6 +68,11 @@ export function listarPorRodada(rodadaId: string): Promise<PalpiteComContexto[]>
   });
 }
 
+/** Todos os palpites do torneio (insumo do acumulado da classificação geral). */
+export function listarTodos(): Promise<Palpite[]> {
+  return prisma.palpite.findMany();
+}
+
 /** Palpites de um participante numa rodada (para pré-preencher a correção). */
 export function listarPorParticipanteNaRodada(
   participanteId: string,

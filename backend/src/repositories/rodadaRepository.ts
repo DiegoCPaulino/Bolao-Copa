@@ -1,4 +1,4 @@
-import type { EstadoRodada, FaseRodada, Prisma, Rodada } from "@prisma/client";
+import type { EstadoRodada, FaseRodada, Jogo, Prisma, Rodada } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 
 /**
@@ -9,7 +9,7 @@ import { prisma } from "../config/prisma.js";
  * importam para o placar, NÃO são mando de campo) e nasce com gols reais NULOS.
  */
 
-export type { EstadoRodada, FaseRodada, Rodada };
+export type { EstadoRodada, FaseRodada, Jogo, Rodada };
 
 /** Rodada com os jogos e as duas seleções de cada jogo (para detalhe/exportação). */
 export type RodadaDetalhada = Prisma.RodadaGetPayload<{
@@ -64,4 +64,49 @@ export function buscarPorId(id: string): Promise<RodadaDetalhada | null> {
 
 export function atualizarEstado(id: string, estado: EstadoRodada): Promise<Rodada> {
   return prisma.rodada.update({ where: { id }, data: { estado } });
+}
+
+// — Jogos (parte do agregado Rodada): leitura/escrita do RESULTADO real —————————
+
+/** Jogo com seleções e palpites (com o dono), para o resumo do jogo (§12.3). */
+export type JogoComPalpites = Prisma.JogoGetPayload<{
+  include: {
+    selecaoEsquerda: true;
+    selecaoDireita: true;
+    palpites: { include: { participante: { select: { nome: true; apelido: true } } } };
+  };
+}>;
+
+export function buscarJogoPorId(id: string): Promise<Jogo | null> {
+  return prisma.jogo.findUnique({ where: { id } });
+}
+
+/**
+ * Grava SÓ o placar real do jogo (90 min). Nunca pontos/derivado (CLAUDE.md §3.2):
+ * a pontuação é recalculada sob demanda. Reeditar é só regravar (correção livre §8.6).
+ */
+export function registrarResultadoJogo(
+  id: string,
+  golsEsquerdaReal: number,
+  golsDireitaReal: number,
+): Promise<Jogo> {
+  return prisma.jogo.update({ where: { id }, data: { golsEsquerdaReal, golsDireitaReal } });
+}
+
+/** Jogos JÁ decididos (com placar real); de uma rodada ou, sem filtro, de todas. */
+export function listarJogosComResultado(rodadaId?: string): Promise<Jogo[]> {
+  return prisma.jogo.findMany({
+    where: { golsEsquerdaReal: { not: null }, ...(rodadaId !== undefined ? { rodadaId } : {}) },
+  });
+}
+
+export function buscarJogoComPalpites(id: string): Promise<JogoComPalpites | null> {
+  return prisma.jogo.findUnique({
+    where: { id },
+    include: {
+      selecaoEsquerda: true,
+      selecaoDireita: true,
+      palpites: { include: { participante: { select: { nome: true, apelido: true } } } },
+    },
+  });
 }

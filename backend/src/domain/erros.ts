@@ -106,3 +106,30 @@ export class PalpiteInvalido extends ErroDeDominio {
     super(mensagem);
   }
 }
+
+/** Operação referenciou um jogo (por id) que não existe. */
+export class JogoNaoEncontrado extends ErroDeDominio {
+  readonly codigo = "JOGO_NAO_ENCONTRADO";
+
+  constructor(public readonly id: string) {
+    super(`Jogo não encontrado (id: ${id}).`);
+  }
+}
+
+/** Placar de resultado real inválido (gols devem ser inteiros >= 0). */
+export class ResultadoInvalido extends ErroDeDominio {
+  readonly codigo = "RESULTADO_INVALIDO";
+
+  constructor(mensagem: string) {
+    super(mensagem);
+  }
+}
+
+/** Pediu-se o resumo de um jogo que ainda não teve o resultado registrado. */
+export class ResultadoNaoRegistrado extends ErroDeDominio {
+  readonly codigo = "RESULTADO_NAO_REGISTRADO";
+
+  constructor(public readonly jogoId: string) {
+    super(`O jogo ${jogoId} ainda não tem resultado registrado.`);
+  }
+}
