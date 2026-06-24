@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { NomeObrigatorio, ParticipanteNaoEncontrado } from "../../src/domain/erros.js";
-import { buildApp } from "../../src/http/app.js";
+import { buildAppTeste } from "./fixtures.js";
 
 /**
  * Teste de API leve do bootstrap (Fatia 6.1). Usa `app.inject` — não abre porta nem
@@ -12,7 +12,7 @@ import { buildApp } from "../../src/http/app.js";
  * teste abaixo (`/_*`) só existem aqui para provocar cada ramo do handler central —
  * não vão para produção.
  */
-const app = buildApp({ logger: false });
+const app = buildAppTeste();
 
 // Rotas sintéticas, só para o teste exercitar o handler de erro central.
 app.get("/_nao-encontrado", async () => {

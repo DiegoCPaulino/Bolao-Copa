@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import { ZodError } from "zod";
 import { ErroDeDominio } from "../domain/erros.js";
+import { type ConfigAuth, exigirSessao, registrarAuth } from "./auth.js";
 
 /**
  * Adaptador HTTP (Entrega 2) — apenas MAIS UM adaptador sobre os MESMOS serviços do
@@ -37,10 +38,11 @@ type CorpoErro = {
   erro: { codigo: string; mensagem: string; detalhes?: unknown };
 };
 
-export function buildApp(
-  opcoes: { logger?: FastifyServerOptions["logger"] } = {},
-): FastifyInstance {
-  const app = Fastify({ logger: opcoes.logger ?? true });
+/** Configuração do app: logger (opcional) + auth (injetada — do `.env` ou, nos testes, fixa). */
+export type ConfigApp = { logger?: FastifyServerOptions["logger"] } & ConfigAuth;
+
+export function buildApp(config: ConfigApp): FastifyInstance {
+  const app = Fastify({ logger: config.logger ?? true });
 
   // Handler de erro CENTRAL: traduz os erros tipados (os mesmos que o CLI já trata)
   // em status + JSON consistente. Mantém o try/catch fora das rotas (CLAUDE.md §8.6).
@@ -73,8 +75,19 @@ export function buildApp(
     return reply.status(404).send(corpo);
   });
 
-  // Saúde do bootstrap (sem auth) — smoke do esqueleto: build → erro central → rota.
+  // Saúde do bootstrap (PÚBLICA, sem auth) — smoke do esqueleto.
   app.get("/health", async () => ({ ok: true }));
+
+  // Sessão por cookie + rotas públicas de auth (/auth/login, /auth/logout).
+  registrarAuth(app, config);
+
+  // Escopo PROTEGIDO: o `preHandler` tranca tudo que for registrado aqui dentro. As
+  // rotas de feature da 6.3 entram neste escopo e já nascem exigindo sessão. /me é a
+  // rota de prova do loop login → sessão → acesso.
+  app.register(async (protegidas) => {
+    protegidas.addHook("preHandler", exigirSessao);
+    protegidas.get("/me", async () => ({ autenticado: true }));
+  });
 
   return app;
 }
