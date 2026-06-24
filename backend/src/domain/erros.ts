@@ -85,3 +85,24 @@ export class JogoInvalido extends ErroDeDominio {
     super(mensagem);
   }
 }
+
+/** Palpite referenciou um jogo que não pertence à rodada informada. */
+export class JogoForaDaRodada extends ErroDeDominio {
+  readonly codigo = "JOGO_FORA_DA_RODADA";
+
+  constructor(
+    public readonly jogoId: string,
+    public readonly rodadaId: string,
+  ) {
+    super(`O jogo ${jogoId} não pertence à rodada ${rodadaId}.`);
+  }
+}
+
+/** Placar de palpite inválido (gols devem ser inteiros >= 0). */
+export class PalpiteInvalido extends ErroDeDominio {
+  readonly codigo = "PALPITE_INVALIDO";
+
+  constructor(mensagem: string) {
+    super(mensagem);
+  }
+}

@@ -3,6 +3,7 @@ import type { EstadoRodada, FaseRodada } from "@prisma/client";
 import { formatarMensagemRodada } from "../../domain/whatsapp/mensagemRodada.js";
 import * as rodadas from "../../services/rodadaService.js";
 import * as selecoes from "../../services/selecaoService.js";
+import { ESTADO_LABEL, FASE_LABEL } from "../rotulos.js";
 import { estadoRodadaSchema, montarRodadaInputSchema } from "../schemas/rodadaSchemas.js";
 
 /**
@@ -10,21 +11,6 @@ import { estadoRodadaSchema, montarRodadaInputSchema } from "../schemas/rodadaSc
  * IMPRIME. Esquerda/direita são POSICIONAIS (decisão #15) — a UI nunca fala em
  * casa/fora. O estado é um GUIA (§3.7): a opção de estado só muda o rótulo.
  */
-
-const FASE_LABEL: Record<FaseRodada, string> = {
-  DEZESSEIS_AVOS: "16-avos de final",
-  OITAVAS: "Oitavas de final",
-  QUARTAS: "Quartas de final",
-  SEMIFINAIS: "Semifinais",
-  FINAL: "Rodada final (3º lugar + final)",
-};
-
-const ESTADO_LABEL: Record<EstadoRodada, string> = {
-  MONTADA: "Montada",
-  PALPITES_ABERTOS: "Palpites abertos",
-  RESULTADOS_EM_ANDAMENTO: "Resultados em andamento",
-  ENCERRADA: "Encerrada",
-};
 
 export async function menuRodadas(): Promise<void> {
   let voltar = false;

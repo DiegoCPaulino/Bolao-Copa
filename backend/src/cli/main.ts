@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { ErroDeDominio } from "../domain/erros.js";
 import { menuCatalogo } from "./menus/catalogoMenu.js";
 import { menuPagamentos } from "./menus/pagamentosMenu.js";
+import { menuPalpites } from "./menus/palpitesMenu.js";
 import { menuParticipantes } from "./menus/participantesMenu.js";
 import { menuRodadas } from "./menus/rodadasMenu.js";
 
@@ -28,6 +29,7 @@ async function menuPrincipal(): Promise<void> {
         { name: "Pagamentos", value: "pagamentos" },
         { name: "Catálogo de seleções", value: "catalogo" },
         { name: "Rodadas e jogos", value: "rodadas" },
+        { name: "Palpites", value: "palpites" },
         { name: "Sair", value: "sair" },
       ],
     });
@@ -45,6 +47,9 @@ async function menuPrincipal(): Promise<void> {
           break;
         case "rodadas":
           await menuRodadas();
+          break;
+        case "palpites":
+          await menuPalpites();
           break;
         case "sair":
           sair = true;
