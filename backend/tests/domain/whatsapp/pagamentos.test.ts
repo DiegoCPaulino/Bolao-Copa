@@ -8,6 +8,9 @@ import {
 const linha = (saida: string, prefixo: string) =>
   saida.split("\n").find((l) => l.startsWith(prefixo)) ?? "";
 
+const linhas = (saida: string, prefixo: string) =>
+  saida.split("\n").filter((l) => l.startsWith(prefixo));
+
 describe("formatarPagamentos (artefato WhatsApp — funcional §12.7)", () => {
   // Fixtures tipadas: a anotação garante o literal de `status` (senão o
   // inference de object-literal alargaria "PAGO" para string).
@@ -25,19 +28,39 @@ describe("formatarPagamentos (artefato WhatsApp — funcional §12.7)", () => {
     expect(saida.split("\n").at(0)).toBe("💰 *PAGAMENTOS*");
   });
 
-  it("lista os Pagos com ✅ e seus valores", () => {
+  it("tem o cabeçalho de seção dos Pagos em negrito (Pagos)", () => {
     const saida = formatarPagamentos(participantes, totais);
-    expect(linha(saida, "✅")).toBe("✅ Pagos: Diego (R$35), Lucas (R$40)");
+    expect(linha(saida, "✅")).toBe("✅ *Pagos*");
   });
 
-  it("lista os Pendentes com ⏳ e seus valores", () => {
+  it("tem o cabeçalho de seção dos Pendentes em negrito (Pendentes)", () => {
     const saida = formatarPagamentos(participantes, totais);
-    expect(linha(saida, "⏳")).toBe("⏳ Pendentes: Ana (R$40), João (R$30)");
+    expect(linha(saida, "⏳")).toBe("⏳ *Pendentes*");
+  });
+
+  it("lista uma pessoa por linha, com travessão + valor via reais()", () => {
+    const saida = formatarPagamentos(participantes, totais);
+    expect(linhas(saida, "•")).toEqual([
+      "• Diego — R$ 35",
+      "• Lucas — R$ 40",
+      "• Ana — R$ 40",
+      "• João — R$ 30",
+    ]);
   });
 
   it("fecha com a linha dos três totais (separados por |)", () => {
     const saida = formatarPagamentos(participantes, totais);
     expect(linha(saida, "Esperado:")).toBe("Esperado: R$ 145 | Recebido: R$ 75 | Falta: R$ 70");
+  });
+
+  it("omite a seção vazia (ninguém pago → sem cabeçalho ✅), mantendo os totais", () => {
+    const soPendentes: ParticipantePagamento[] = [
+      { nome: "Ana", valorAPagar: 40, status: "PENDENTE" },
+    ];
+    const saida = formatarPagamentos(soPendentes, { esperado: 40, recebido: 0, falta: 40 });
+    expect(linha(saida, "✅")).toBe("");
+    expect(linha(saida, "⏳")).toBe("⏳ *Pendentes*");
+    expect(linha(saida, "Esperado:")).toBe("Esperado: R$ 40 | Recebido: R$ 0 | Falta: R$ 40");
   });
 
   it("desambigua homônimos dentro do artefato (usa nomeExibicao)", () => {
@@ -46,6 +69,6 @@ describe("formatarPagamentos (artefato WhatsApp — funcional §12.7)", () => {
       { nome: "João", apelido: "Magro", valorAPagar: 40, status: "PAGO" },
     ];
     const saida = formatarPagamentos(comHomonimos, { esperado: 75, recebido: 75, falta: 0 });
-    expect(linha(saida, "✅")).toBe("✅ Pagos: João (Barba) (R$35), João (Magro) (R$40)");
+    expect(linhas(saida, "•")).toEqual(["• João (Barba) — R$ 35", "• João (Magro) — R$ 40"]);
   });
 });

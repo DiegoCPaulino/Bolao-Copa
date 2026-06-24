@@ -15,43 +15,59 @@ export type ParticipantePagamento = {
 };
 
 /**
- * Pagamentos para o WhatsApp — funcional §12.7:
+ * Pagamentos para o WhatsApp — funcional §12.7, em LISTA (uma pessoa por linha):
  *
  *   💰 *PAGAMENTOS*
  *
- *   ✅ Pagos: Nome (R$x), ...
- *   ⏳ Pendentes: Nome (R$y), ...
+ *   ✅ *Pagos*
+ *   • Nome — R$ x
+ *   • Nome — R$ y
+ *
+ *   ⏳ *Pendentes*
+ *   • Nome — R$ z
  *
  *   Esperado: R$ ... | Recebido: R$ ... | Falta: R$ ...
  *
  * Função PURA. Recebe os participantes com o `valorAPagar` pronto e os `totais`
  * JÁ calculados — não recalcula nada (CLAUDE.md §3.3, §10).
  *
+ * Layout em lista (em vez do texto corrido anterior): com ~63 participantes uma
+ * linha por pessoa é muito mais legível no celular do que uma frase enorme com
+ * vírgulas. O valor de cada item agora também passa por `reais()` ("R$ 35"),
+ * unificando a formatação com a linha de totais.
+ *
+ * Seção vazia: OMITIDA por completo (cabeçalho + itens). Se ninguém estiver
+ * "Pago", o bloco "✅ *Pagos*" simplesmente não aparece — evita um cabeçalho
+ * solto sem itens. A linha de totais sempre aparece.
+ *
  * Sobre o "|": a linha de totais usa a barra como separador LITERAL (como no
  * §12.7). "Sem tabela" significa sem sintaxe de tabela markdown, não banir o
  * caractere "|".
- *
- * Formatação do valor: nos itens usamos "R$35" (compacto, como no exemplo);
- * na linha de totais usamos `reais()` → "R$ 2.300" (com agrupamento de milhar).
- * A diferença é proposital e segue o §12.7 — itens nunca passam de R$ 40, então
- * não precisam de separador de milhar.
  */
 export function formatarPagamentos(
   participantes: ReadonlyArray<ParticipantePagamento>,
   totais: TotaisPagamento,
 ): string {
   const item = (participante: ParticipantePagamento) =>
-    `${nomeExibicao(participante, participantes)} (R$${participante.valorAPagar})`;
+    `• ${nomeExibicao(participante, participantes)} — ${reais(participante.valorAPagar)}`;
 
-  const pagos = participantes.filter((p) => p.status === "PAGO").map(item);
-  const pendentes = participantes.filter((p) => p.status === "PENDENTE").map(item);
+  const secao = (
+    cabecalho: string,
+    membros: ReadonlyArray<ParticipantePagamento>,
+  ): string | null => (membros.length === 0 ? null : [cabecalho, ...membros.map(item)].join("\n"));
 
-  return [
-    `💰 ${negrito("PAGAMENTOS")}`,
-    "",
-    `✅ Pagos: ${pagos.join(", ")}`,
-    `⏳ Pendentes: ${pendentes.join(", ")}`,
-    "",
-    `Esperado: ${reais(totais.esperado)} | Recebido: ${reais(totais.recebido)} | Falta: ${reais(totais.falta)}`,
-  ].join("\n");
+  const pagos = secao(
+    `✅ ${negrito("Pagos")}`,
+    participantes.filter((p) => p.status === "PAGO"),
+  );
+  const pendentes = secao(
+    `⏳ ${negrito("Pendentes")}`,
+    participantes.filter((p) => p.status === "PENDENTE"),
+  );
+  const totaisLinha = `Esperado: ${reais(totais.esperado)} | Recebido: ${reais(totais.recebido)} | Falta: ${reais(totais.falta)}`;
+
+  // Blocos separados por linha em branco; seções vazias (null) caem fora.
+  return [`💰 ${negrito("PAGAMENTOS")}`, pagos, pendentes, totaisLinha]
+    .filter((bloco): bloco is string => bloco !== null)
+    .join("\n\n");
 }
