@@ -12,6 +12,7 @@
     "check": "biome check .",
     "typecheck": "tsc --noEmit",
     "cli": "node --env-file=.env --import tsx src/cli/main.ts",
+    "dev": "node --env-file=.env --watch --import tsx src/http/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -38,6 +39,7 @@
   "dependencies": {
     "@inquirer/prompts": "^8.5.2",
     "@prisma/client": "^6.19.3",
+    "fastify": "^5.8.5",
     "zod": "^4.4.3"
   }
 }
