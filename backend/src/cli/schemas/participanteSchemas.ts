@@ -27,6 +27,9 @@ export const participanteInputSchema = z.object({
   nome,
   apelido: textoOpcional,
   indicadorId: textoOpcional,
+  // Isento de pagamento: o CLI sempre manda o boolean do `confirm`; o `default(false)`
+  // serve ao corpo HTTP da Entrega 2 (campo ausente = não isento).
+  isento: z.boolean().default(false),
 });
 
 export type ParticipanteInput = z.infer<typeof participanteInputSchema>;

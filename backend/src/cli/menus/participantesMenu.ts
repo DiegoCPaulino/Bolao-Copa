@@ -92,9 +92,10 @@ async function cadastrar(): Promise<void> {
   });
   const apelido = await input({ message: "Apelido (opcional, Enter p/ pular)" });
   const indicadorId = await selecionarIndicador("Indicado por", null, null);
+  const isento = await confirm({ message: "Isento de pagamento?", default: false });
 
   // Zod (casca) transforma a entrada crua no dado tipado do serviço.
-  const dados = participanteInputSchema.parse({ nome, apelido, indicadorId });
+  const dados = participanteInputSchema.parse({ nome, apelido, indicadorId, isento });
   const criado = await participantes.criarParticipante(dados);
   console.log(`\n✅ Cadastrado: ${rotulo(criado)}\n`);
 }
@@ -112,8 +113,9 @@ async function editar(): Promise<void> {
   const apelido = await input({ message: "Apelido (opcional)", default: alvo.apelido ?? "" });
   // Exclui o próprio da lista de indicadores (ninguém indica a si mesmo).
   const indicadorId = await selecionarIndicador("Indicado por", alvo.id, alvo.indicadorId);
+  const isento = await confirm({ message: "Isento de pagamento?", default: alvo.isento });
 
-  const dados = participanteInputSchema.parse({ nome, apelido, indicadorId });
+  const dados = participanteInputSchema.parse({ nome, apelido, indicadorId, isento });
   const atualizado = await participantes.atualizarParticipante(alvo.id, dados);
   console.log(`\n✅ Atualizado: ${rotulo(atualizado)}\n`);
 }
@@ -152,8 +154,11 @@ function rotulo(p: Pick<Participante, "nome" | "apelido">): string {
 
 /** Linha de listagem: rótulo + status + indicador resolvido. */
 function linhaParticipante(p: ParticipanteComIndicador): string {
+  // Isento aparece na lista de Participantes (ele disputa!), mas com o status de
+  // pagamento substituído por "isento" — ele não está nem "pago" nem "pendente".
+  const situacao = p.isento ? "isento" : p.status === "PAGO" ? "pago" : "pendente";
   const indicacao = p.indicador ? ` — indicado por ${rotulo(p.indicador)}` : "";
-  return `${rotulo(p)} [${p.status === "PAGO" ? "pago" : "pendente"}]${indicacao}`;
+  return `${rotulo(p)} [${situacao}]${indicacao}`;
 }
 
 /** Escolhe um participante existente; null (e avisa) se ainda não há nenhum. */

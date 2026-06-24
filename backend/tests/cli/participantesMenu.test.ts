@@ -33,12 +33,14 @@ describe.skipIf(!temBanco)("menuParticipantes (CLI leve, com Postgres)", () => {
     // indicador não chega a perguntar (não há candidatos), então só há 2 inputs.
     select.mockResolvedValueOnce("cadastrar").mockResolvedValueOnce("voltar");
     input.mockResolvedValueOnce("Maria").mockResolvedValueOnce("");
+    confirm.mockResolvedValueOnce(false); // "Isento de pagamento?" → não
 
     await menuParticipantes();
 
     const todos = await prisma.participante.findMany();
     expect(todos.map((p) => p.nome)).toEqual(["Maria"]);
     expect(todos[0]?.status).toBe("PENDENTE");
+    expect(todos[0]?.isento).toBe(false);
   });
 
   it("remove pelo menu após confirmação", async () => {
