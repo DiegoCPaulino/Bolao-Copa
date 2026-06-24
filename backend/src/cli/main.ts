@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { ErroDeDominio } from "../domain/erros.js";
 import { menuCatalogo } from "./menus/catalogoMenu.js";
 import { menuPagamentos } from "./menus/pagamentosMenu.js";
+import { menuPainel } from "./menus/painelMenu.js";
 import { menuPalpites } from "./menus/palpitesMenu.js";
 import { menuParticipantes } from "./menus/participantesMenu.js";
 import { menuResultados } from "./menus/resultadosMenu.js";
@@ -26,6 +27,7 @@ async function menuPrincipal(): Promise<void> {
     const opcao = await select({
       message: "Bolão Copa 2026 — menu principal",
       choices: [
+        { name: "Resumo geral", value: "painel" },
         { name: "Participantes", value: "participantes" },
         { name: "Pagamentos", value: "pagamentos" },
         { name: "Catálogo de seleções", value: "catalogo" },
@@ -38,6 +40,9 @@ async function menuPrincipal(): Promise<void> {
 
     try {
       switch (opcao) {
+        case "painel":
+          await menuPainel();
+          break;
         case "participantes":
           await menuParticipantes();
           break;
