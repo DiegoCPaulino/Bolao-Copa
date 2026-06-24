@@ -6,24 +6,27 @@ const prisma = new PrismaClient();
  * Catálogo de seleções da Copa 2026 (nome + bandeira emoji) — dado de
  * referência, populado por seed (arquitetura §6).
  *
- * ⚠️ LISTA PARCIAL (subconjunto inicial de alta confiança: anfitriões + seleções
- * tradicionais). COMPLETAR até as 48 com a lista oficial. Como o seed é
- * IDEMPOTENTE (upsert por `nome`), rodar de novo com a lista cheia apenas
- * ACRESCENTA as faltantes — nunca duplica. As "home nations" (Inglaterra,
- * Escócia, País de Gales) usam emojis de bandeira de subdivisão (🏴…); adicionar
- * aqui ao completar.
+ * Catálogo COMPLETO das 48 seleções. O seed é IDEMPOTENTE (upsert por `nome`):
+ * rodar N vezes = rodar uma — só acrescenta o que faltar, nunca duplica. As "home
+ * nations" (Inglaterra, Escócia) usam emojis de bandeira de subdivisão
+ * (tag-sequences 🏴…); alguns terminais os mostram como bandeira preta, mas o
+ * WhatsApp renderiza certo.
  */
 const SELECOES: ReadonlyArray<{ nome: string; bandeira: string }> = [
   // Anfitriões (CONCACAF)
   { nome: "Estados Unidos", bandeira: "🇺🇸" },
   { nome: "México", bandeira: "🇲🇽" },
   { nome: "Canadá", bandeira: "🇨🇦" },
+  { nome: "Panamá", bandeira: "🇵🇦" },
+  { nome: "Haiti", bandeira: "🇭🇹" },
+  { nome: "Curaçao", bandeira: "🇨🇼" },
   // CONMEBOL
   { nome: "Brasil", bandeira: "🇧🇷" },
   { nome: "Argentina", bandeira: "🇦🇷" },
   { nome: "Uruguai", bandeira: "🇺🇾" },
   { nome: "Colômbia", bandeira: "🇨🇴" },
   { nome: "Equador", bandeira: "🇪🇨" },
+  { nome: "Paraguai", bandeira: "🇵🇾" },
   // UEFA
   { nome: "França", bandeira: "🇫🇷" },
   { nome: "Espanha", bandeira: "🇪🇸" },
@@ -33,15 +36,35 @@ const SELECOES: ReadonlyArray<{ nome: string; bandeira: string }> = [
   { nome: "Bélgica", bandeira: "🇧🇪" },
   { nome: "Croácia", bandeira: "🇭🇷" },
   { nome: "Suíça", bandeira: "🇨🇭" },
+  { nome: "Inglaterra", bandeira: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  { nome: "Escócia", bandeira: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+  { nome: "Áustria", bandeira: "🇦🇹" },
+  { nome: "Noruega", bandeira: "🇳🇴" },
+  { nome: "Bósnia e Herzegovina", bandeira: "🇧🇦" },
+  { nome: "República Tcheca", bandeira: "🇨🇿" },
+  { nome: "Turquia", bandeira: "🇹🇷" },
+  { nome: "Suécia", bandeira: "🇸🇪" },
   // AFC
   { nome: "Japão", bandeira: "🇯🇵" },
   { nome: "Coreia do Sul", bandeira: "🇰🇷" },
   { nome: "Austrália", bandeira: "🇦🇺" },
   { nome: "Irã", bandeira: "🇮🇷" },
+  { nome: "Arábia Saudita", bandeira: "🇸🇦" },
+  { nome: "Catar", bandeira: "🇶🇦" },
+  { nome: "Jordânia", bandeira: "🇯🇴" },
+  { nome: "Uzbequistão", bandeira: "🇺🇿" },
+  { nome: "Iraque", bandeira: "🇮🇶" },
   // CAF
   { nome: "Marrocos", bandeira: "🇲🇦" },
   { nome: "Senegal", bandeira: "🇸🇳" },
   { nome: "Egito", bandeira: "🇪🇬" },
+  { nome: "Costa do Marfim", bandeira: "🇨🇮" },
+  { nome: "Argélia", bandeira: "🇩🇿" },
+  { nome: "África do Sul", bandeira: "🇿🇦" },
+  { nome: "Tunísia", bandeira: "🇹🇳" },
+  { nome: "Gana", bandeira: "🇬🇭" },
+  { nome: "Cabo Verde", bandeira: "🇨🇻" },
+  { nome: "República Democrática do Congo", bandeira: "🇨🇩" },
   // OFC
   { nome: "Nova Zelândia", bandeira: "🇳🇿" },
 ];
