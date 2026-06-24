@@ -9,10 +9,8 @@ import { z } from "zod";
  * é tarde e o erro vem disfarçado de bug. Aqui o `.env` (carregado pelo `node
  * --env-file` do script `dev`) vira um objeto tipado e seguro.
  *
- * Escopo desta fatia (6.1): só o HTTP usa este módulo — o adaptador de terminal
- * (Entrega 1) segue lendo `DATABASE_URL` direto e não importa daqui, então nada do
- * CLI muda. `SESSION_SECRET` entra na 6.2 (auth) — o slot já está documentado abaixo
- * para o schema crescer no mesmo lugar.
+ * Escopo: só o HTTP usa este módulo — o adaptador de terminal (Entrega 1) segue
+ * lendo `DATABASE_URL` direto e não importa daqui, então nada do CLI muda.
  */
 const envSchema = z.object({
   // String de conexão do Postgres. Não usamos `.url()` de propósito (variações de API
@@ -28,9 +26,22 @@ const envSchema = z.object({
   // tem default de desenvolvimento para `npm run dev` subir sem configuração extra.
   PORT: z.coerce.number().int().positive().default(3000),
 
-  // SESSION_SECRET: segredo da sessão (cookie httpOnly) — entra na Fatia 6.2 (auth).
-  // Quando chegar, será obrigatório e com tamanho mínimo, ex.:
-  //   SESSION_SECRET: z.string().min(32, "SESSION_SECRET deve ter ao menos 32 chars."),
+  // Define o cookie Secure (só em produção/HTTPS) — ver server.ts. Em dev local sem
+  // TLS, Secure travaria o login, então fica `false` (default development).
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+  // Auth single-user (Fatia 6.2). Segredo de onde a sessão deriva sua chave de
+  // cifragem (secure-session): mínimo de 32 chars por segurança.
+  SESSION_SECRET: z.string().min(32, "SESSION_SECRET deve ter ao menos 32 caracteres."),
+
+  // Hash argon2id da senha do organizador (gerado por `npm run gerar-hash`). A senha
+  // em si NUNCA fica no .env — só o hash. Não há tabela de usuários (CLAUDE.md §3.8).
+  ORGANIZADOR_SENHA_HASH: z
+    .string()
+    .min(1, "ORGANIZADOR_SENHA_HASH é obrigatória.")
+    .refine((v) => v.startsWith("$argon2"), {
+      message: "ORGANIZADOR_SENHA_HASH deve ser um hash argon2 (rode `npm run gerar-hash`).",
+    }),
 });
 
 export type Env = z.infer<typeof envSchema>;
