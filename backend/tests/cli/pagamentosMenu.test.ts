@@ -47,6 +47,7 @@ describe.skipIf(!temBanco)("menuPagamentos (CLI leve, com Postgres)", () => {
     log.mockRestore();
 
     expect(saida).toContain("*PAGAMENTOS*");
-    expect(saida).toContain("Esperado:");
+    expect(saida).toContain("🏆 *Prêmio*:"); // rodapé do grupo = só a premiação
+    expect(saida).not.toContain("Esperado:"); // pote bruto não vai para o grupo
   });
 });

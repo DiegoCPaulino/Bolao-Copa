@@ -1,4 +1,4 @@
-import type { StatusPagamento, TotaisPagamento } from "../pagamento.js";
+import type { StatusPagamento } from "../pagamento.js";
 import { negrito, reais } from "./formato.js";
 import { nomeExibicao } from "./nomeExibicao.js";
 
@@ -15,6 +15,16 @@ export type ParticipantePagamento = {
 };
 
 /**
+ * Premiação para o texto do GRUPO: só os 75% (atual e potencial), JÁ calculados.
+ * Os 25% do organizador NUNCA entram aqui — este texto vai para o grupo, e a fatia
+ * dele é assunto privado (visível só no Resumo geral). Ver `dividirPote`.
+ */
+export type PremiacaoPagamento = {
+  premiacaoAtual: number;
+  premiacaoPotencial: number;
+};
+
+/**
  * Pagamentos para o WhatsApp — funcional §12.7, em LISTA (uma pessoa por linha):
  *
  *   💰 *PAGAMENTOS*
@@ -26,27 +36,27 @@ export type ParticipantePagamento = {
  *   ⏳ *Pendentes*
  *   • Nome — R$ z
  *
- *   Esperado: R$ ... | Recebido: R$ ... | Falta: R$ ...
+ *   🏆 *Prêmio*: R$ <atual> / R$ <potencial>
  *
- * Função PURA. Recebe os participantes com o `valorAPagar` pronto e os `totais`
- * JÁ calculados — não recalcula nada (CLAUDE.md §3.3, §10).
+ * Função PURA. Recebe os participantes com o `valorAPagar` pronto e a `premiacao`
+ * JÁ calculada — não recalcula nada (CLAUDE.md §3.3, §10).
  *
  * Layout em lista (em vez do texto corrido anterior): com ~63 participantes uma
  * linha por pessoa é muito mais legível no celular do que uma frase enorme com
- * vírgulas. O valor de cada item agora também passa por `reais()` ("R$ 35"),
- * unificando a formatação com a linha de totais.
+ * vírgulas. O valor de cada item passa por `reais()` ("R$ 35").
  *
  * Seção vazia: OMITIDA por completo (cabeçalho + itens). Se ninguém estiver
  * "Pago", o bloco "✅ *Pagos*" simplesmente não aparece — evita um cabeçalho
- * solto sem itens. A linha de totais sempre aparece.
+ * solto sem itens. A linha de prêmio sempre aparece.
  *
- * Sobre o "|": a linha de totais usa a barra como separador LITERAL (como no
- * §12.7). "Sem tabela" significa sem sintaxe de tabela markdown, não banir o
- * caractere "|".
+ * Rodapé do GRUPO = só a PREMIAÇÃO (os 75%), no formato "atual / potencial".
+ * Trocamos a antiga linha "Esperado/Recebido/Falta" por ela de propósito: o pote
+ * bruto e a fatia de 25% do organizador são assunto privado (Resumo geral), nunca
+ * vão para o grupo.
  */
 export function formatarPagamentos(
   participantes: ReadonlyArray<ParticipantePagamento>,
-  totais: TotaisPagamento,
+  premiacao: PremiacaoPagamento,
 ): string {
   const item = (participante: ParticipantePagamento) =>
     `• ${nomeExibicao(participante, participantes)} — ${reais(participante.valorAPagar)}`;
@@ -64,10 +74,10 @@ export function formatarPagamentos(
     `⏳ ${negrito("Pendentes")}`,
     participantes.filter((p) => p.status === "PENDENTE"),
   );
-  const totaisLinha = `Esperado: ${reais(totais.esperado)} | Recebido: ${reais(totais.recebido)} | Falta: ${reais(totais.falta)}`;
+  const premioLinha = `🏆 ${negrito("Prêmio")}: ${reais(premiacao.premiacaoAtual)} / ${reais(premiacao.premiacaoPotencial)}`;
 
   // Blocos separados por linha em branco; seções vazias (null) caem fora.
-  return [`💰 ${negrito("PAGAMENTOS")}`, pagos, pendentes, totaisLinha]
+  return [`💰 ${negrito("PAGAMENTOS")}`, pagos, pendentes, premioLinha]
     .filter((bloco): bloco is string => bloco !== null)
     .join("\n\n");
 }

@@ -1,4 +1,5 @@
 import { select } from "@inquirer/prompts";
+import { dividirPote } from "../../domain/premiacao.js";
 import { reais } from "../../domain/whatsapp/formato.js";
 import { formatarPagamentos } from "../../domain/whatsapp/pagamentos.js";
 import type { PagamentoParticipante } from "../../services/pagamentoService.js";
@@ -77,8 +78,13 @@ async function alternar(): Promise<void> {
 
 async function exportar(): Promise<void> {
   const { participantes, totais } = await pagamentos.listarPagamentos();
-  // O formatador (§12.7) recebe os valores e totais JÁ calculados e devolve string;
-  // o CLI só imprime o text/plain pronto para colar no WhatsApp.
+  // Só os 75% (premiação) vão para o grupo, no formato atual / potencial. `dividirPote`
+  // é a MESMA regra de domínio do Resumo geral (não reimplementamos cálculo aqui); o
+  // formatador (§12.7) recebe os valores JÁ prontos e devolve string — o CLI só imprime.
+  const premiacao = {
+    premiacaoAtual: dividirPote(totais.recebido).premiacao,
+    premiacaoPotencial: dividirPote(totais.esperado).premiacao,
+  };
   const texto = formatarPagamentos(
     participantes.map((p) => ({
       nome: p.nome,
@@ -86,7 +92,7 @@ async function exportar(): Promise<void> {
       valorAPagar: p.valorAPagar,
       status: p.status,
     })),
-    totais,
+    premiacao,
   );
   console.log(`\n${texto}\n`);
 }
