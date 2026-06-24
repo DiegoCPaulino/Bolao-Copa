@@ -21,7 +21,7 @@ if (!temBanco) {
   );
 }
 
-const base = { nome: "Diego", apelido: null, indicadorId: null } as const;
+const base = { nome: "Diego", apelido: null, indicadorId: null, isento: false } as const;
 
 describe.skipIf(!temBanco)("participanteService (integração com Postgres)", () => {
   beforeEach(limparBanco);
@@ -117,6 +117,32 @@ describe.skipIf(!temBanco)("participanteService (integração com Postgres)", ()
       await expect(
         service.atualizarParticipante(p.id, { ...base, indicadorId: p.id }),
       ).rejects.toBeInstanceOf(IndicacaoInvalida);
+    });
+  });
+
+  describe("isenção de pagamento (fato gravado — §8.7/§8.8)", () => {
+    it("nasce não-isento por padrão e grava o fato quando marcado", async () => {
+      const normal = await service.criarParticipante({ ...base, nome: "Normal" });
+      expect(normal.isento).toBe(false);
+
+      const isento = await service.criarParticipante({ ...base, nome: "Zé", isento: true });
+      expect(isento.isento).toBe(true);
+    });
+
+    it("isento CONTINUA na lista de participantes (ele disputa normalmente)", async () => {
+      await service.criarParticipante({ ...base, nome: "Zé", isento: true });
+      const lista = await service.listarParticipantes();
+      expect(lista.find((p) => p.nome === "Zé")?.isento).toBe(true);
+    });
+
+    it("editar alterna a isenção (false→true→false)", async () => {
+      const p = await service.criarParticipante(base);
+      expect((await service.atualizarParticipante(p.id, { ...base, isento: true })).isento).toBe(
+        true,
+      );
+      expect((await service.atualizarParticipante(p.id, { ...base, isento: false })).isento).toBe(
+        false,
+      );
     });
   });
 

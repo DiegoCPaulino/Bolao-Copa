@@ -23,6 +23,7 @@ export type DadosGravaveis = {
   nome: string;
   apelido: string | null;
   indicadorId: string | null;
+  isento: boolean;
 };
 
 /** Opções de listagem: busca/filtro/ordenação simples (funcional §9.1, item 2). */

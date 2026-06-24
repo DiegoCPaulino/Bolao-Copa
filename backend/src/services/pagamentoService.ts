@@ -36,21 +36,32 @@ export type ResumoPagamentos = {
  *  2. tabula, em memória, quantos indicam cada participante (indicação DIRETA: só
  *     `indicadorId === id`, sem cadeia; conta o indicado que ENTROU mesmo sem pagar,
  *     pois nada aqui olha o status do indicado — funcional §8.7);
- *  3. cada valor a pagar = `calcularValorAPagar(nº de indicados diretos)` (já aplica
+ *  3. EXCLUI os isentos do universo de cobrança (não pagam, não somam nos totais,
+ *     não aparecem no §12.7). O filtro mora AQUI, no serviço: as funções puras
+ *     (`calcularValorAPagar`/`calcularTotaisPagamento`) não conhecem isenção e
+ *     recebem só quem realmente paga (CLAUDE.md §3.1/§3.3);
+ *  4. cada valor a pagar = `calcularValorAPagar(nº de indicados diretos)` (já aplica
  *     desconto e piso);
- *  4. os 3 totais saem de `calcularTotaisPagamento` sobre os valores derivados.
+ *  5. os 3 totais saem de `calcularTotaisPagamento` sobre os valores derivados.
+ *
+ * Nota sobre indicação × isenção: a contagem de indicados roda sobre TODOS (passo 2),
+ * antes do filtro. Um indicado isento ENTROU no bolão, então continua abatendo R$ 5
+ * do seu indicador (funcional §8.7) — a isenção tira o próprio isento da cobrança,
+ * não desfaz a indicação que ele gerou.
  */
 export async function listarPagamentos(): Promise<ResumoPagamentos> {
   const todos = await repo.listarTodos();
   const indicadosPorId = contarIndicadosDiretos(todos);
 
-  const participantes: PagamentoParticipante[] = todos.map((p) => ({
-    id: p.id,
-    nome: p.nome,
-    apelido: p.apelido,
-    valorAPagar: calcularValorAPagar(indicadosPorId.get(p.id) ?? 0),
-    status: p.status,
-  }));
+  const participantes: PagamentoParticipante[] = todos
+    .filter((p) => !p.isento)
+    .map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      apelido: p.apelido,
+      valorAPagar: calcularValorAPagar(indicadosPorId.get(p.id) ?? 0),
+      status: p.status,
+    }));
 
   return { participantes, totais: calcularTotaisPagamento(participantes) };
 }

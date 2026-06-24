@@ -15,13 +15,14 @@ if (!temBanco) {
   );
 }
 
-/** Cria um participante cru (status PENDENTE por padrão). */
+/** Cria um participante cru (status PENDENTE e NÃO isento por padrão). */
 function criar(
   nome: string,
   indicadorId: string | null = null,
   status: "PAGO" | "PENDENTE" = "PENDENTE",
+  isento = false,
 ) {
-  return prisma.participante.create({ data: { nome, indicadorId, status } });
+  return prisma.participante.create({ data: { nome, indicadorId, status, isento } });
 }
 
 /** Valor a pagar DERIVADO de um participante, lido do quadro de pagamentos. */
@@ -87,6 +88,44 @@ describe.skipIf(!temBanco)("pagamentoService (integração com Postgres)", () =>
       expect(totais.esperado).toBe(120); // 3 × 40
       expect(totais.recebido).toBe(80); // 2 pagos × 40
       expect(totais.falta).toBe(40); // 120 − 80
+    });
+  });
+
+  describe("isenção de pagamento — §8.7/§8.8", () => {
+    it("isento fica FORA da lista e dos totais (só os não-isentos contam)", async () => {
+      await criar("Ana", null, "PAGO"); // paga 40
+      await criar("Bruno", null, "PENDENTE"); // deve 40
+      await criar("Zé", null, "PAGO", true); // ISENTO — não paga, não soma
+
+      const { participantes, totais } = await service.listarPagamentos();
+
+      // Zé some do quadro de pagamentos, embora exista como participante.
+      expect(participantes.map((p) => p.nome)).toEqual(["Ana", "Bruno"]);
+      // Totais batem só com Ana + Bruno; Zé, mesmo marcado PAGO, não entra.
+      expect(totais.esperado).toBe(80); // 2 × 40
+      expect(totais.recebido).toBe(40); // só Ana
+      expect(totais.falta).toBe(40); // 80 − 40
+    });
+
+    it("marcar isento (false→true) remove dos pagamentos; voltar (true→false) traz com valor normal", async () => {
+      const ze = await criar("Zé"); // não isento, PENDENTE → entra valendo 40
+      const nomes = async () => (await service.listarPagamentos()).participantes.map((p) => p.nome);
+
+      expect(await nomes()).toContain("Zé");
+
+      await prisma.participante.update({ where: { id: ze.id }, data: { isento: true } });
+      expect(await nomes()).not.toContain("Zé"); // saiu da cobrança
+
+      await prisma.participante.update({ where: { id: ze.id }, data: { isento: false } });
+      expect(await valorDe(ze.id)).toBe(40); // voltou com o valor normal
+    });
+
+    it("indicado isento ainda abate do indicador (ele ENTROU no bolão — §8.7)", async () => {
+      const ana = await criar("Ana"); // não isenta
+      await criar("Bruno", ana.id, "PENDENTE", true); // indicado por Ana, mas isento
+
+      // A isenção tira Bruno da cobrança, não desfaz a indicação: Ana ganha o −R$5.
+      expect(await valorDe(ana.id)).toBe(35);
     });
   });
 

@@ -26,6 +26,10 @@ export type DadosParticipante = {
   nome: string;
   apelido: string | null;
   indicadorId: string | null;
+  // Isento de PAGAMENTO (funcional §8.7/§8.8): não muda nada da disputa; só tira o
+  // participante do universo de cobrança (quem filtra é o pagamentoService).
+  // Opcional por conveniência: ausente = não isento (o Zod do adaptador já manda boolean).
+  isento?: boolean;
 };
 
 export type { Participante, ParticipanteComIndicador };
@@ -33,7 +37,12 @@ export type { Participante, ParticipanteComIndicador };
 export async function criarParticipante(dados: DadosParticipante): Promise<Participante> {
   const nome = exigirNome(dados.nome);
   await garantirIndicadorValido(dados.indicadorId, null);
-  return repo.criar({ nome, apelido: dados.apelido, indicadorId: dados.indicadorId });
+  return repo.criar({
+    nome,
+    apelido: dados.apelido,
+    indicadorId: dados.indicadorId,
+    isento: dados.isento ?? false,
+  });
 }
 
 export async function atualizarParticipante(
@@ -43,7 +52,12 @@ export async function atualizarParticipante(
   await exigirExistente(id);
   const nome = exigirNome(dados.nome);
   await garantirIndicadorValido(dados.indicadorId, id);
-  return repo.atualizar(id, { nome, apelido: dados.apelido, indicadorId: dados.indicadorId });
+  return repo.atualizar(id, {
+    nome,
+    apelido: dados.apelido,
+    indicadorId: dados.indicadorId,
+    isento: dados.isento ?? false,
+  });
 }
 
 export async function removerParticipante(id: string): Promise<void> {
