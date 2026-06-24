@@ -16,6 +16,13 @@ export async function menuPainel(): Promise<void> {
   console.log(
     `  Esperado: ${reais(pagamentos.esperado)} | Recebido: ${reais(pagamentos.recebido)} | Falta: ${reais(pagamentos.falta)}`,
   );
+  // Divisão do pote (tela privada → mostra os dois lados). Formato: atual / potencial.
+  console.log(
+    `  🏆 Premiação (75%): ${reais(pagamentos.premiacaoAtual)} / ${reais(pagamentos.premiacaoPotencial)} (potencial)`,
+  );
+  console.log(
+    `  💼 Organizador (25%): ${reais(pagamentos.ganhoAtual)} / ${reais(pagamentos.ganhoPotencial)} (potencial)`,
+  );
 
   console.log("\nRodada atual:");
   if (!rodadaAtual) {

@@ -53,12 +53,17 @@ describe.skipIf(!temBanco)("painelService (integração com Postgres)", () => {
     const resumo = await painel.gerarResumo();
 
     // 3 participantes × R$40 (sem indicação) → esperado 120; 2 pagos → recebido 80.
+    // Premiação 75%: do recebido 80 → 60/20; do esperado 120 → 90/30.
     expect(resumo.pagamentos).toEqual({
       pagos: 2,
       total: 3,
       esperado: 120,
       recebido: 80,
       falta: 40,
+      premiacaoAtual: 60,
+      ganhoAtual: 20,
+      premiacaoPotencial: 90,
+      ganhoPotencial: 30,
     });
     // Atual = rodada 2 (maior ordem não encerrada).
     expect(resumo.rodadaAtual?.ordem).toBe(2);

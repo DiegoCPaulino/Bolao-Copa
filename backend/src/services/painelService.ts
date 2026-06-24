@@ -1,3 +1,4 @@
+import { dividirPote } from "../domain/premiacao.js";
 import type { EstadoRodada, FaseRodada, RodadaResumo } from "../repositories/rodadaRepository.js";
 import * as pagamentoService from "./pagamentoService.js";
 import * as palpiteService from "./palpiteService.js";
@@ -15,6 +16,13 @@ export type ResumoPagamentos = {
   esperado: number;
   recebido: number;
   falta: number;
+  // Divisão do pote 75/25 (derivada, nunca armazenada). "Atual" = sobre o recebido;
+  // "potencial" = sobre o esperado. Esta é a tela PRIVADA do organizador, então
+  // mostra os dois lados (premiação E o ganho dele) — diferente do export do grupo.
+  premiacaoAtual: number;
+  ganhoAtual: number;
+  premiacaoPotencial: number;
+  ganhoPotencial: number;
 };
 
 export type ResumoRodadaAtual = {
@@ -33,12 +41,18 @@ export type ResumoGeral = {
 
 export async function gerarResumo(): Promise<ResumoGeral> {
   const { participantes, totais } = await pagamentoService.listarPagamentos();
+  const atual = dividirPote(totais.recebido);
+  const potencial = dividirPote(totais.esperado);
   const pagamentos: ResumoPagamentos = {
     pagos: participantes.filter((p) => p.status === "PAGO").length,
     total: participantes.length,
     esperado: totais.esperado,
     recebido: totais.recebido,
     falta: totais.falta,
+    premiacaoAtual: atual.premiacao,
+    ganhoAtual: atual.organizador,
+    premiacaoPotencial: potencial.premiacao,
+    ganhoPotencial: potencial.organizador,
   };
 
   return { pagamentos, rodadaAtual: await resumirRodadaAtual(participantes.length) };
