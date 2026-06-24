@@ -14,3 +14,11 @@ export const DESCONTO_POR_INDICACAO = 5;
 
 /** Piso: ninguém paga menos que isto, por mais indicações que tenha (R$). */
 export const PISO = 5;
+
+/**
+ * Fração do pote arrecadado destinada à PREMIAÇÃO (o restante, 25%, é do
+ * organizador). É a única fração nomeada de propósito: o organizador recebe o
+ * RESTO da divisão (ver `dividirPote`), então não precisa de uma constante própria
+ * — assim os dois sempre somam o total exato, sem centavo perdido no arredondamento.
+ */
+export const FRACAO_PREMIACAO = 0.75;
