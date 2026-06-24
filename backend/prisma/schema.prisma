@@ -55,6 +55,10 @@ model Participante {
   nome     String
   apelido  String? // opcional — diferencia homônimos
   status   StatusPagamento @default(PENDENTE)
+  // Isento de PAGAMENTO: disputa tudo normalmente (palpites/pontos/classificação),
+  // mas fica FORA da cobrança — sem valor a pagar, fora dos totais e do artefato
+  // §12.7. Gravamos o FATO (boolean), nunca um "valor R$0" derivado (CLAUDE.md §3.2).
+  isento   Boolean         @default(false)
   criadoEm DateTime        @default(now())
 
   // Indicação AUTO-REFERENTE (o ponto mais interessante da modelagem, arq. §4.5):
