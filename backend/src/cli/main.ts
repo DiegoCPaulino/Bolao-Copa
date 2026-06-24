@@ -1,4 +1,5 @@
 import { select } from "@inquirer/prompts";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma.js";
 import { ErroDeDominio } from "../domain/erros.js";
 import { menuCatalogo } from "./menus/catalogoMenu.js";
@@ -21,6 +22,20 @@ import { menuRodadas } from "./menus/rodadasMenu.js";
  * Tratamento de erro centralizado (CLAUDE.md §8.6): erros de domínio viram mensagem
  * clara e o loop continua; qualquer outro erro (bug) sobe e encerra com código ≠ 0.
  */
+
+const MSG_BANCO_FORA =
+  "⚠️  Não consegui falar com o banco de dados.\n" +
+  "   Ele está no ar? Rode `docker compose up -d` na raiz do projeto e tente de novo.";
+
+/** Reconhece falhas de conexão com o Postgres (banco fora do ar) para dar uma
+ * mensagem amigável em vez de despejar o erro cru do Prisma no organizador. */
+function ehBancoIndisponivel(erro: unknown): boolean {
+  return (
+    erro instanceof Prisma.PrismaClientInitializationError ||
+    (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P1001")
+  );
+}
+
 async function menuPrincipal(): Promise<void> {
   let sair = false;
   while (!sair) {
@@ -76,7 +91,14 @@ async function menuPrincipal(): Promise<void> {
   }
 }
 
-menuPrincipal()
+async function iniciar(): Promise<void> {
+  // Conecta cedo: se o banco estiver fora, falha AQUI com mensagem amigável, antes
+  // de o organizador navegar e tomar um erro no meio de uma ação.
+  await prisma.$connect();
+  await menuPrincipal();
+}
+
+iniciar()
   .then(async () => {
     await prisma.$disconnect();
     console.log("Até a próxima! 👋");
@@ -86,6 +108,10 @@ menuPrincipal()
     // Ctrl+C dentro de um prompt: o inquirer lança ExitPromptError — saída limpa.
     if (erro instanceof Error && erro.name === "ExitPromptError") {
       process.exit(0);
+    }
+    if (ehBancoIndisponivel(erro)) {
+      console.error(`\n${MSG_BANCO_FORA}\n`);
+      process.exit(1);
     }
     console.error("Erro inesperado:", erro);
     process.exit(1);
