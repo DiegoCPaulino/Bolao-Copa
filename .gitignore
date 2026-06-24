@@ -21,6 +21,9 @@ coverage/
 *.sqlite3
 *.db
 
+# Dumps de backup (podem conter dados reais — nunca versionar)
+backups/
+
 # Logs
 *.log
 npm-debug.log*

@@ -20,7 +20,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:backup": "node scripts/backupBancoLocal.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
