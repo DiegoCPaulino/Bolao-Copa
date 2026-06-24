@@ -33,6 +33,15 @@ describe("ordenarClassificacao (desempate em cascata — funcional §8.5)", () =
     expect(ids(ordenarClassificacao([b, a]))).toEqual(["A", "B"]);
   });
 
+  it("resultados certos desempatam no 3º critério (cascata completa §8.5)", () => {
+    // Cenário SINTÉTICO: mesmos pontos E mesmos exatos, só os certos diferem. É
+    // redundante no sistema 3/1/0 (certos = pontos − 2×exatos), mas prova que o 3º
+    // nível da cascata funciona — robustez a uma futura mudança na tabela de pontos.
+    const a = p("A", 5, 1, 3);
+    const b = p("B", 5, 1, 2);
+    expect(ids(ordenarClassificacao([b, a]))).toEqual(["A", "B"]); // A tem mais certos
+  });
+
   it("empate total mantém a ordem de entrada (sort estável)", () => {
     const primeiro = p("primeiro", 7, 2, 3); // 2×2 + 3 = 7
     const segundo = p("segundo", 7, 2, 3); // idêntico nos três critérios
