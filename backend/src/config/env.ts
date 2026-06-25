@@ -22,9 +22,16 @@ const envSchema = z.object({
       message: "DATABASE_URL deve ser uma URL postgres:// ou postgresql://.",
     }),
 
-  // Porta do servidor Fastify. `coerce` porque toda variável de ambiente é string;
-  // tem default de desenvolvimento para `npm run dev` subir sem configuração extra.
-  PORT: z.coerce.number().int().positive().default(3000),
+  // Porta do servidor Fastify. `coerce` porque toda variável de ambiente é string.
+  // O PaaS (Render) injeta a PORT; em dev cai no default 3000. O `preprocess` trata
+  // STRING VAZIA como ausente: o Render pode injetar PORT="" e `Number("")` é 0, que
+  // reprovava em `.positive()` ("Too small: expected number to be >0") — só o
+  // `.default` cobre `undefined`, não "". Normalizando ""/espaços → undefined, o
+  // default volta a valer. Porta numérica válida (ex.: "10000") passa intacta.
+  PORT: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.coerce.number().int().positive().default(3000),
+  ),
 
   // Define o cookie Secure (só em produção/HTTPS) — ver server.ts. Em dev local sem
   // TLS, Secure travaria o login, então fica `false` (default development).
