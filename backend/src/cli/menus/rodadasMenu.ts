@@ -1,10 +1,10 @@
 import { number, select } from "@inquirer/prompts";
 import type { EstadoRodada, FaseRodada } from "@prisma/client";
 import { formatarMensagemRodada } from "../../domain/whatsapp/mensagemRodada.js";
+import { estadoRodadaSchema, montarRodadaInputSchema } from "../../schemas/rodadaSchemas.js";
 import * as rodadas from "../../services/rodadaService.js";
 import * as selecoes from "../../services/selecaoService.js";
 import { ESTADO_LABEL, FASE_LABEL } from "../rotulos.js";
-import { estadoRodadaSchema, montarRodadaInputSchema } from "../schemas/rodadaSchemas.js";
 
 /**
  * Submenu de Rodadas e Jogos — ADAPTADOR (CLAUDE.md §5): pergunta, chama o serviço e

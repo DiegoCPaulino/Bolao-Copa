@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 /**
- * Validação da entrada do menu de Rodadas — na casca (CLAUDE.md §3.1), reusável pelo
- * HTTP na Entrega 2. Os enums espelham os de `schema.prisma` (FaseRodada/EstadoRodada);
- * o Zod precisa da lista literal para validar em runtime.
+ * Validação de Rodadas — na CASCA dos adaptadores (CLAUDE.md §3.1), em pasta NEUTRA
+ * `schemas/` (fonte única CLI + HTTP). Os enums espelham `schema.prisma`
+ * (FaseRodada/EstadoRodada); o Zod precisa da lista literal para validar em runtime.
  */
 
 export const faseRodadaSchema = z.enum([
@@ -33,3 +33,11 @@ export const montarRodadaInputSchema = z.object({
 });
 
 export type MontarRodadaInput = z.infer<typeof montarRodadaInputSchema>;
+
+/**
+ * Corpo do HTTP `PUT /rodadas/:id/estado`: o id vem da URL; o corpo traz o novo estado.
+ * O estado é um GUIA, não uma trava (§3.7) — qualquer estado é aceito.
+ */
+export const definirEstadoInputSchema = z.object({
+  estado: estadoRodadaSchema,
+});

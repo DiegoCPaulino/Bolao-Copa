@@ -2,10 +2,10 @@ import { number, select } from "@inquirer/prompts";
 import { formatarClassificacaoGeral } from "../../domain/whatsapp/classificacaoGeral.js";
 import { formatarResumoJogo } from "../../domain/whatsapp/resumoJogo.js";
 import { formatarResumoRodada } from "../../domain/whatsapp/resumoRodada.js";
+import { registrarResultadoInputSchema } from "../../schemas/resultadoSchemas.js";
 import * as resultados from "../../services/resultadoService.js";
 import * as rodadas from "../../services/rodadaService.js";
 import { FASE_LABEL } from "../rotulos.js";
-import { registrarResultadoInputSchema } from "../schemas/resultadoSchemas.js";
 
 /**
  * Submenu de Resultados e Pontuação — ADAPTADOR (CLAUDE.md §5): pergunta, chama o

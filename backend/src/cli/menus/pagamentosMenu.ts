@@ -2,9 +2,9 @@ import { select } from "@inquirer/prompts";
 import { dividirPote } from "../../domain/premiacao.js";
 import { reais } from "../../domain/whatsapp/formato.js";
 import { formatarPagamentos } from "../../domain/whatsapp/pagamentos.js";
+import { alternarStatusInputSchema } from "../../schemas/pagamentoSchemas.js";
 import type { PagamentoParticipante } from "../../services/pagamentoService.js";
 import * as pagamentos from "../../services/pagamentoService.js";
-import { alternarStatusInputSchema } from "../schemas/pagamentoSchemas.js";
 
 /**
  * Submenu de Pagamentos — ADAPTADOR (CLAUDE.md §5): pergunta, chama o serviço e

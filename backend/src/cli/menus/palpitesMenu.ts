@@ -1,11 +1,11 @@
 import { number, select } from "@inquirer/prompts";
 import { formatarPendencias } from "../../domain/whatsapp/pendencias.js";
 import { formatarTabelaPalpites } from "../../domain/whatsapp/tabelaPalpites.js";
+import { registrarPalpitesInputSchema } from "../../schemas/palpiteSchemas.js";
 import * as palpites from "../../services/palpiteService.js";
 import * as participantesSvc from "../../services/participanteService.js";
 import * as rodadas from "../../services/rodadaService.js";
 import { FASE_LABEL } from "../rotulos.js";
-import { registrarPalpitesInputSchema } from "../schemas/palpiteSchemas.js";
 
 /**
  * Submenu de Palpites — ADAPTADOR (CLAUDE.md §5): pergunta, chama o serviço e IMPRIME.
