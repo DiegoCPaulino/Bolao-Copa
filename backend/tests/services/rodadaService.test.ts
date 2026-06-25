@@ -31,7 +31,7 @@ describe.skipIf(!temBanco)("rodadaService (integração com Postgres)", () => {
     it("cria a rodada (MONTADA) e os jogos com ordem 1..N e times posicionais", async () => {
       const [a, b, c, d] = await Promise.all([mkSel("A"), mkSel("B"), mkSel("C"), mkSel("D")]);
 
-      const rodada = await service.montarRodada("OITAVAS", 1, [
+      const rodada = await service.montarRodada("OITAVAS", [
         { selecaoEsquerdaId: a.id, selecaoDireitaId: b.id },
         { selecaoEsquerdaId: c.id, selecaoDireitaId: d.id },
       ]);
@@ -49,10 +49,25 @@ describe.skipIf(!temBanco)("rodadaService (integração com Postgres)", () => {
       expect(rodada.jogos[0]?.golsEsquerdaReal).toBeNull();
     });
 
+    it("a ORDEM é derivada pelo serviço na sequência (1ª → 1, 2ª → 2)", async () => {
+      const [a, b, c, d] = await Promise.all([mkSel("A"), mkSel("B"), mkSel("C"), mkSel("D")]);
+
+      const primeira = await service.montarRodada("OITAVAS", [
+        { selecaoEsquerdaId: a.id, selecaoDireitaId: b.id },
+      ]);
+      const segunda = await service.montarRodada("QUARTAS", [
+        { selecaoEsquerdaId: c.id, selecaoDireitaId: d.id },
+      ]);
+
+      // O chamador NÃO passa ordem — o serviço a atribui (próxima da sequência).
+      expect(primeira.ordem).toBe(1);
+      expect(segunda.ordem).toBe(2);
+    });
+
     it("rejeita seleção inexistente", async () => {
       const a = await mkSel("A");
       await expect(
-        service.montarRodada("OITAVAS", 1, [
+        service.montarRodada("OITAVAS", [
           { selecaoEsquerdaId: a.id, selecaoDireitaId: "nao-existe" },
         ]),
       ).rejects.toBeInstanceOf(SelecaoInvalida);
@@ -61,18 +76,18 @@ describe.skipIf(!temBanco)("rodadaService (integração com Postgres)", () => {
     it("rejeita o mesmo time nos dois lados de um jogo", async () => {
       const a = await mkSel("A");
       await expect(
-        service.montarRodada("OITAVAS", 1, [{ selecaoEsquerdaId: a.id, selecaoDireitaId: a.id }]),
+        service.montarRodada("OITAVAS", [{ selecaoEsquerdaId: a.id, selecaoDireitaId: a.id }]),
       ).rejects.toBeInstanceOf(JogoInvalido);
     });
 
     it("rejeita rodada sem jogos", async () => {
-      await expect(service.montarRodada("OITAVAS", 1, [])).rejects.toBeInstanceOf(JogoInvalido);
+      await expect(service.montarRodada("OITAVAS", [])).rejects.toBeInstanceOf(JogoInvalido);
     });
 
     it("monta a rodada final com 2 jogos, sem código especial (decisão #19)", async () => {
       const [a, b, c, d] = await Promise.all([mkSel("A"), mkSel("B"), mkSel("C"), mkSel("D")]);
 
-      const final = await service.montarRodada("FINAL", 5, [
+      const final = await service.montarRodada("FINAL", [
         { selecaoEsquerdaId: a.id, selecaoDireitaId: b.id }, // 3º lugar
         { selecaoEsquerdaId: c.id, selecaoDireitaId: d.id }, // final
       ]);
@@ -85,7 +100,7 @@ describe.skipIf(!temBanco)("rodadaService (integração com Postgres)", () => {
   describe("estado é GUIA, não trava (§3.7)", () => {
     it("permite qualquer transição e não bloqueia ações", async () => {
       const [a, b] = await Promise.all([mkSel("A"), mkSel("B")]);
-      const r = await service.montarRodada("OITAVAS", 1, [
+      const r = await service.montarRodada("OITAVAS", [
         { selecaoEsquerdaId: a.id, selecaoDireitaId: b.id },
       ]);
       expect(r.estado).toBe("MONTADA");

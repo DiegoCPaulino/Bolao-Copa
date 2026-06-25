@@ -28,7 +28,7 @@ async function montarRodada(qtdJogos: number) {
     const d = await prisma.selecao.create({ data: { nome: `D${i}`, bandeira: "🏳️" } });
     jogos.push({ selecaoEsquerdaId: e.id, selecaoDireitaId: d.id });
   }
-  return rodadaService.montarRodada("OITAVAS", 1, jogos);
+  return rodadaService.montarRodada("OITAVAS", jogos);
 }
 
 describe.skipIf(!temBanco)("menuPalpites (CLI leve, com Postgres)", () => {

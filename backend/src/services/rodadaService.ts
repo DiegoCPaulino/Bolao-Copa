@@ -25,14 +25,18 @@ export type JogoParaMontar = {
 /**
  * Monta a rodada: cria a Rodada (estado inicial MONTADA) e seus jogos. `N` é livre —
  * o chamador decide quantos jogos (acomoda a rodada final de 2 jogos, decisão #19,
- * sem código especial). A `ordem` dos jogos é atribuída aqui (1..N).
+ * sem código especial).
+ *
+ * A `ordem` da RODADA é responsabilidade do SERVIÇO (não do adaptador, CLAUDE.md §3.3):
+ * é a próxima da sequência, derivada AQUI no momento da criação (`proximaOrdem`). Os
+ * jogos também são numerados aqui (1..N). Single-user, sem concorrência — não há corrida
+ * pela próxima ordem.
  *
  * Valida: ao menos um jogo; em cada jogo, as duas seleções EXISTEM no catálogo e são
  * DISTINTAS (2x1 ≠ 1x2, mas um time não joga contra si mesmo).
  */
 export async function montarRodada(
   fase: FaseRodada,
-  ordem: number,
   jogos: ReadonlyArray<JogoParaMontar>,
 ): Promise<RodadaDetalhada> {
   if (jogos.length === 0) {
@@ -46,6 +50,7 @@ export async function montarRodada(
     await garantirSelecaoExiste(jogo.selecaoDireitaId);
   }
 
+  const ordem = await rodadaRepo.proximaOrdem();
   const dadosJogos = jogos.map((jogo, indice) => ({ ordem: indice + 1, ...jogo }));
   return rodadaRepo.criarComJogos(fase, ordem, dadosJogos);
 }

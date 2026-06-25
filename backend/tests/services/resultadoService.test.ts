@@ -21,14 +21,19 @@ if (!temBanco) {
   );
 }
 
-async function montarRodada(qtdJogos: number, ordem = 1) {
+// Contador só para nomear seleções de forma única entre chamadas (nome é @unique); a
+// ORDEM da rodada não é mais passada — o serviço a deriva.
+let selSeq = 0;
+
+async function montarRodada(qtdJogos: number) {
   const jogos = [];
   for (let i = 0; i < qtdJogos; i++) {
-    const e = await prisma.selecao.create({ data: { nome: `E${ordem}-${i}`, bandeira: "🏳️" } });
-    const d = await prisma.selecao.create({ data: { nome: `D${ordem}-${i}`, bandeira: "🏳️" } });
+    const tag = selSeq++;
+    const e = await prisma.selecao.create({ data: { nome: `E${tag}`, bandeira: "🏳️" } });
+    const d = await prisma.selecao.create({ data: { nome: `D${tag}`, bandeira: "🏳️" } });
     jogos.push({ selecaoEsquerdaId: e.id, selecaoDireitaId: d.id });
   }
-  return rodadaService.montarRodada("OITAVAS", ordem, jogos);
+  return rodadaService.montarRodada("OITAVAS", jogos);
 }
 
 function criar(nome: string) {

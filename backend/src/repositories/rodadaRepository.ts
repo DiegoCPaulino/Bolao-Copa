@@ -58,6 +58,16 @@ export function listar(): Promise<RodadaResumo[]> {
   });
 }
 
+/**
+ * Próxima `ordem` na sequência de rodadas: MAX(ordem) + 1 (ou 1 se não houver
+ * nenhuma). Usa MAX (não contagem) para a sequência seguir monotônica mesmo se uma
+ * rodada for removida — assim a ordem nunca é reusada.
+ */
+export async function proximaOrdem(): Promise<number> {
+  const { _max } = await prisma.rodada.aggregate({ _max: { ordem: true } });
+  return (_max.ordem ?? 0) + 1;
+}
+
 export function buscarPorId(id: string): Promise<RodadaDetalhada | null> {
   return prisma.rodada.findUnique({ where: { id }, include: { jogos: JOGOS_DETALHADOS } });
 }

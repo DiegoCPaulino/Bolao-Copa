@@ -25,7 +25,7 @@ const temBanco = await bancoDisponivel();
 async function montarRodadaComJogo() {
   const e = await prisma.selecao.create({ data: { nome: "Brasil", bandeira: "🇧🇷" } });
   const d = await prisma.selecao.create({ data: { nome: "Argentina", bandeira: "🇦🇷" } });
-  return rodadaService.montarRodada("OITAVAS", 1, [
+  return rodadaService.montarRodada("OITAVAS", [
     { selecaoEsquerdaId: e.id, selecaoDireitaId: d.id },
   ]);
 }

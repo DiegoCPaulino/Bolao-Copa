@@ -21,19 +21,20 @@ if (!temBanco) {
   );
 }
 
+// Contador só para nomear seleções de forma única entre chamadas (nome é @unique); a
+// ORDEM da rodada não é mais passada — o serviço a deriva.
+let selSeq = 0;
+
 /** Monta uma rodada com `qtdJogos` jogos (cria as seleções) e devolve-a detalhada. */
-async function montarRodada(qtdJogos: number, ordem = 1) {
+async function montarRodada(qtdJogos: number) {
   const jogos = [];
   for (let i = 0; i < qtdJogos; i++) {
-    const esquerda = await prisma.selecao.create({
-      data: { nome: `E${ordem}-${i}`, bandeira: "🏳️" },
-    });
-    const direita = await prisma.selecao.create({
-      data: { nome: `D${ordem}-${i}`, bandeira: "🏳️" },
-    });
+    const tag = selSeq++;
+    const esquerda = await prisma.selecao.create({ data: { nome: `E${tag}`, bandeira: "🏳️" } });
+    const direita = await prisma.selecao.create({ data: { nome: `D${tag}`, bandeira: "🏳️" } });
     jogos.push({ selecaoEsquerdaId: esquerda.id, selecaoDireitaId: direita.id });
   }
-  return rodadaService.montarRodada("OITAVAS", ordem, jogos);
+  return rodadaService.montarRodada("OITAVAS", jogos);
 }
 
 function criarParticipante(nome: string, apelido: string | null = null) {
@@ -73,8 +74,8 @@ describe.skipIf(!temBanco)("palpiteService (integração com Postgres)", () => {
     });
 
     it("rejeita jogo de outra rodada", async () => {
-      const r1 = await montarRodada(1, 1);
-      const r2 = await montarRodada(1, 2);
+      const r1 = await montarRodada(1);
+      const r2 = await montarRodada(1);
       const jogoDeOutra = r2.jogos[0];
       if (!jogoDeOutra) throw new Error("setup");
       const p = await criarParticipante("Ana");

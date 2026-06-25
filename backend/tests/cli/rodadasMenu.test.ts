@@ -55,7 +55,7 @@ describe.skipIf(!temBanco)("menuRodadas (CLI leve, com Postgres)", () => {
 
   it("exporta a mensagem da rodada (§12.1) pronta para o WhatsApp", async () => {
     const [a, b] = await Promise.all([mkSel("Brasil", "🇧🇷"), mkSel("Argentina", "🇦🇷")]);
-    const r = await rodadaService.montarRodada("OITAVAS", 1, [
+    const r = await rodadaService.montarRodada("OITAVAS", [
       { selecaoEsquerdaId: a.id, selecaoDireitaId: b.id },
     ]);
     select

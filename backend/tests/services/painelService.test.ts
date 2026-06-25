@@ -15,14 +15,19 @@ if (!temBanco) {
   );
 }
 
-async function montarRodada(ordem: number, qtdJogos = 1) {
+// Contador só para nomear seleções de forma única entre chamadas (nome é @unique). A
+// ORDEM da rodada vem do serviço (sequência de criação): a 1ª montada é 1, a 2ª é 2.
+let selSeq = 0;
+
+async function montarRodada(qtdJogos = 1) {
   const jogos = [];
   for (let i = 0; i < qtdJogos; i++) {
-    const e = await prisma.selecao.create({ data: { nome: `E${ordem}-${i}`, bandeira: "🏳️" } });
-    const d = await prisma.selecao.create({ data: { nome: `D${ordem}-${i}`, bandeira: "🏳️" } });
+    const tag = selSeq++;
+    const e = await prisma.selecao.create({ data: { nome: `E${tag}`, bandeira: "🏳️" } });
+    const d = await prisma.selecao.create({ data: { nome: `D${tag}`, bandeira: "🏳️" } });
     jogos.push({ selecaoEsquerdaId: e.id, selecaoDireitaId: d.id });
   }
-  return rodadaService.montarRodada("OITAVAS", ordem, jogos);
+  return rodadaService.montarRodada("OITAVAS", jogos);
 }
 
 describe.skipIf(!temBanco)("painelService (integração com Postgres)", () => {
@@ -39,7 +44,7 @@ describe.skipIf(!temBanco)("painelService (integração com Postgres)", () => {
 
     const r1 = await montarRodada(1);
     await rodadaService.definirEstado(r1.id, "ENCERRADA");
-    const r2 = await montarRodada(2);
+    const r2 = await montarRodada(1);
     const jogo = r2.jogos[0];
     if (!jogo) throw new Error("setup");
     // Ana e Bruno palpitam na rodada 2; Carla não.
@@ -74,7 +79,7 @@ describe.skipIf(!temBanco)("painelService (integração com Postgres)", () => {
 
   it("com todas as rodadas encerradas, a atual é a última (maior ordem)", async () => {
     const r1 = await montarRodada(1);
-    const r2 = await montarRodada(2);
+    const r2 = await montarRodada(1);
     await rodadaService.definirEstado(r1.id, "ENCERRADA");
     await rodadaService.definirEstado(r2.id, "ENCERRADA");
 

@@ -80,10 +80,9 @@ async function montar(): Promise<void> {
     jogos.push({ selecaoEsquerdaId, selecaoDireitaId });
   }
 
-  // A ordem da rodada é a próxima na sequência (1..5); o serviço numera os jogos 1..N.
-  const ordem = (await rodadas.listarRodadas()).length + 1;
   const dados = montarRodadaInputSchema.parse({ fase, jogos });
-  const criada = await rodadas.montarRodada(dados.fase, ordem, dados.jogos);
+  // A ordem da rodada é derivada pelo SERVIÇO — o adaptador só passa fase + jogos.
+  const criada = await rodadas.montarRodada(dados.fase, dados.jogos);
   console.log(
     `\n✅ Rodada montada: ${FASE_LABEL[criada.fase]} — ${criada.jogos.length} jogo(s).\n`,
   );

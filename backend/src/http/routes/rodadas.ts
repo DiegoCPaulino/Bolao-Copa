@@ -22,10 +22,8 @@ export async function rotasRodadas(app: FastifyInstance): Promise<void> {
 
   app.post("/rodadas", async (req, reply) => {
     const dados = montarRodadaInputSchema.parse(req.body);
-    // `ordem` = próxima na sequência — mesma regra do adaptador CLI; o serviço (intocado)
-    // recebe a ordem pronta. Não é regra de negócio nova, é numeração de apresentação.
-    const ordem = (await rodadas.listarRodadas()).length + 1;
-    const criada = await rodadas.montarRodada(dados.fase, ordem, dados.jogos);
+    // A ordem da rodada é derivada pelo SERVIÇO — o adaptador só passa fase + jogos.
+    const criada = await rodadas.montarRodada(dados.fase, dados.jogos);
     reply.code(201);
     return criada;
   });
