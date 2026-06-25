@@ -25,18 +25,11 @@ export function aoReceber401(handler: () => void): void {
 
 type CorpoErro = { erro?: { codigo?: string; mensagem?: string } };
 
-async function request<T>(metodo: string, caminho: string, corpo?: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${caminho}`, {
-    method: metodo,
-    credentials: "include",
-    headers: corpo === undefined ? undefined : { "Content-Type": "application/json" },
-    body: corpo === undefined ? undefined : JSON.stringify(corpo),
-  });
-
+/** 401 central + erro padronizado → ApiError. Compartilhado por JSON e text/plain. */
+async function garantirOk(res: Response): Promise<Response> {
   if (res.status === 401) {
     handler401?.();
   }
-
   if (!res.ok) {
     const dados = (await res.json().catch(() => ({}))) as CorpoErro;
     throw new ApiError(
@@ -45,17 +38,37 @@ async function request<T>(metodo: string, caminho: string, corpo?: unknown): Pro
       dados.erro?.mensagem ?? `Falha na requisição (${res.status}).`,
     );
   }
+  return res;
+}
 
+async function request<T>(metodo: string, caminho: string, corpo?: unknown): Promise<T> {
+  const res = await garantirOk(
+    await fetch(`${API_URL}${caminho}`, {
+      method: metodo,
+      credentials: "include",
+      headers: corpo === undefined ? undefined : { "Content-Type": "application/json" },
+      body: corpo === undefined ? undefined : JSON.stringify(corpo),
+    }),
+  );
   if (res.status === 204) {
     return undefined as T;
   }
   return (await res.json()) as T;
 }
 
-/** Verbos JSON. As exportações (text/plain) ganham um helper próprio quando a Fase 8 precisar. */
+/** GET de exportação (text/plain): devolve o texto JÁ PRONTO dos formatadores do back. */
+async function requestTexto(caminho: string): Promise<string> {
+  const res = await garantirOk(
+    await fetch(`${API_URL}${caminho}`, { method: "GET", credentials: "include" }),
+  );
+  return res.text();
+}
+
 export const api = {
   get: <T>(caminho: string) => request<T>("GET", caminho),
   post: <T>(caminho: string, corpo?: unknown) => request<T>("POST", caminho, corpo),
   put: <T>(caminho: string, corpo?: unknown) => request<T>("PUT", caminho, corpo),
   del: <T>(caminho: string) => request<T>("DELETE", caminho),
+  /** text/plain — para as exportações de WhatsApp (§12.x). */
+  getTexto: (caminho: string) => requestTexto(caminho),
 };

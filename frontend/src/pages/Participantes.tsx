@@ -1,0 +1,391 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { ApiError } from "@/api/client";
+import * as participantesApi from "@/api/participantes";
+import type { Participante } from "@/api/participantes";
+import { CopiarWhatsApp } from "@/components/CopiarWhatsApp";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+// Sentinelas: Radix Select não aceita value vazio, então "Nenhum"/"Todos" usam tokens.
+const NENHUM = "__nenhum__";
+const TODOS = "__todos__";
+
+/** Rótulo de exibição: nome + apelido entre aspas, se houver. */
+function rotulo(p: { nome: string; apelido: string | null }): string {
+  return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
+}
+
+// Validação de FORMA no cliente (espelha o participanteInputSchema do back, que valida de
+// verdade). O front NÃO reimplementa regra de negócio — só valida o formulário (§3.1).
+const formSchema = z.object({
+  nome: z.string().trim().min(1, "O nome é obrigatório."),
+  apelido: z.string().trim(),
+  indicadorId: z.string(),
+  isento: z.boolean(),
+});
+type FormCampos = z.infer<typeof formSchema>;
+
+export function Participantes() {
+  const [lista, setLista] = useState<Participante[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erroCarga, setErroCarga] = useState<string | null>(null);
+
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<string>(TODOS);
+  const [ordenarPor, setOrdenarPor] = useState<"nome" | "status">("nome");
+
+  const [editando, setEditando] = useState<Participante | null>(null);
+  const [formAberto, setFormAberto] = useState(false);
+  const [removendo, setRemovendo] = useState<Participante | null>(null);
+  const [textoExport, setTextoExport] = useState<string | null>(null);
+
+  async function recarregar() {
+    setCarregando(true);
+    setErroCarga(null);
+    try {
+      setLista(await participantesApi.listarParticipantes());
+    } catch (e) {
+      setErroCarga(e instanceof ApiError ? e.message : "Falha ao carregar participantes.");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  useEffect(() => {
+    void recarregar();
+  }, []);
+
+  // Busca/filtro/ordenação CLIENT-SIDE: na escala do bolão (~63) é instantâneo e ainda
+  // permite ordenar por status (que a query da API não oferece). A API tem os filtros
+  // server-side (ver api/participantes.ts) caso um dia precise.
+  const visiveis = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    const filtrados = lista.filter((p) => {
+      const casaBusca =
+        termo === "" ||
+        p.nome.toLowerCase().includes(termo) ||
+        (p.apelido?.toLowerCase().includes(termo) ?? false);
+      const casaStatus = filtroStatus === TODOS || p.status === filtroStatus;
+      return casaBusca && casaStatus;
+    });
+    return [...filtrados].sort((a, b) =>
+      ordenarPor === "nome"
+        ? a.nome.localeCompare(b.nome, "pt-BR")
+        : a.status.localeCompare(b.status) || a.nome.localeCompare(b.nome, "pt-BR"),
+    );
+  }, [lista, busca, filtroStatus, ordenarPor]);
+
+  async function exportar() {
+    try {
+      setTextoExport(await participantesApi.exportarParticipantes());
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Falha ao exportar.");
+    }
+  }
+
+  async function confirmarRemocao() {
+    if (!removendo) return;
+    try {
+      await participantesApi.removerParticipante(removendo.id);
+      toast.success("Participante removido.");
+      setRemovendo(null);
+      await recarregar();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Não foi possível remover.");
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold">Participantes</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => void exportar()}>
+            Exportar
+          </Button>
+          <Button
+            onClick={() => {
+              setEditando(null);
+              setFormAberto(true);
+            }}
+          >
+            Novo participante
+          </Button>
+        </div>
+      </div>
+
+      {/* Busca / filtro / ordenação (ricos — §16) */}
+      <div className="flex flex-wrap gap-2">
+        <Input
+          placeholder="Buscar por nome ou apelido…"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          className="max-w-xs"
+        />
+        <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODOS}>Todos os status</SelectItem>
+            <SelectItem value="PAGO">Pagos</SelectItem>
+            <SelectItem value="PENDENTE">Pendentes</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={ordenarPor} onValueChange={(v) => setOrdenarPor(v as "nome" | "status")}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nome">Ordenar por nome</SelectItem>
+            <SelectItem value="status">Ordenar por status</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {carregando && <p className="text-muted-foreground">Carregando…</p>}
+      {erroCarga && (
+        <div className="rounded-md border border-destructive/50 p-3 text-sm text-destructive">
+          {erroCarga}{" "}
+          <button type="button" className="underline" onClick={() => void recarregar()}>
+            Tentar de novo
+          </button>
+        </div>
+      )}
+
+      {!carregando && !erroCarga && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Apelido</TableHead>
+              <TableHead>Indicado por</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Isento</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {visiveis.length === 0 ? (
+              <TableRow>
+                <TableCell className="text-muted-foreground" colSpan={6}>
+                  Nenhum participante encontrado.
+                </TableCell>
+              </TableRow>
+            ) : (
+              visiveis.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">{p.nome}</TableCell>
+                  <TableCell className="text-muted-foreground">{p.apelido ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {p.indicador ? rotulo(p.indicador) : "—"}
+                  </TableCell>
+                  <TableCell>{p.status === "PAGO" ? "Pago" : "Pendente"}</TableCell>
+                  <TableCell>{p.isento ? "Sim" : "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditando(p);
+                          setFormAberto(true);
+                        }}
+                      >
+                        Editar
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setRemovendo(p)}>
+                        Remover
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      )}
+
+      {/* Cadastrar / Editar */}
+      <Dialog open={formAberto} onOpenChange={setFormAberto}>
+        <DialogContent key={editando?.id ?? "novo"}>
+          <DialogHeader>
+            <DialogTitle>{editando ? "Editar participante" : "Novo participante"}</DialogTitle>
+            <DialogDescription>
+              {editando ? "Atualize os dados do participante." : "Cadastre um novo participante."}
+            </DialogDescription>
+          </DialogHeader>
+          <FormParticipante
+            editando={editando}
+            candidatos={lista}
+            onCancelar={() => setFormAberto(false)}
+            onSalvo={() => {
+              setFormAberto(false);
+              void recarregar();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Remover (confirmação de ação destrutiva) */}
+      <Dialog open={removendo !== null} onOpenChange={(v) => !v && setRemovendo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover participante</DialogTitle>
+            <DialogDescription>
+              Remover <strong>{removendo ? rotulo(removendo) : ""}</strong>? Se ele indicou
+              outras pessoas, elas NÃO são apagadas — apenas deixam de constar como indicadas
+              por ele.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemovendo(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={() => void confirmarRemocao()}>
+              Remover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exportar → texto pronto (§12.6) + Copiar */}
+      <Dialog open={textoExport !== null} onOpenChange={(v) => !v && setTextoExport(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Exportar para o WhatsApp</DialogTitle>
+            <DialogDescription>Texto pronto (§12.6) — copie e cole no grupo.</DialogDescription>
+          </DialogHeader>
+          <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded bg-muted p-3 text-sm">
+            {textoExport}
+          </pre>
+          <DialogFooter>{textoExport !== null && <CopiarWhatsApp texto={textoExport} />}</DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
+function FormParticipante({
+  editando,
+  candidatos,
+  onSalvo,
+  onCancelar,
+}: {
+  editando: Participante | null;
+  candidatos: Participante[];
+  onSalvo: () => void;
+  onCancelar: () => void;
+}) {
+  // "Indicado por": seleciona de quem já existe (NUNCA digita). Na edição, exclui o próprio.
+  const candidatosValidos = candidatos.filter((c) => c.id !== editando?.id);
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<FormCampos>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      nome: editando?.nome ?? "",
+      apelido: editando?.apelido ?? "",
+      indicadorId: editando?.indicadorId ?? NENHUM,
+      isento: editando?.isento ?? false,
+    },
+  });
+
+  async function aoEnviar(campos: FormCampos) {
+    const dados = {
+      nome: campos.nome,
+      apelido: campos.apelido.trim() === "" ? null : campos.apelido.trim(),
+      indicadorId: campos.indicadorId === NENHUM ? null : campos.indicadorId,
+      isento: campos.isento,
+    };
+    try {
+      if (editando) {
+        await participantesApi.editarParticipante(editando.id, dados);
+        toast.success("Participante atualizado.");
+      } else {
+        await participantesApi.criarParticipante(dados);
+        toast.success("Participante cadastrado.");
+      }
+      onSalvo();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Não foi possível salvar.");
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(aoEnviar)} className="flex flex-col gap-4" noValidate>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="nome">Nome</Label>
+        <Input id="nome" aria-invalid={errors.nome ? true : undefined} {...register("nome")} />
+        {errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="apelido">Apelido (opcional)</Label>
+        <Input id="apelido" {...register("apelido")} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>Indicado por</Label>
+        <Controller
+          control={control}
+          name="indicadorId"
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NENHUM}>Nenhum</SelectItem>
+                {candidatosValidos.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {rotulo(c)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Controller
+          control={control}
+          name="isento"
+          render={({ field }) => (
+            <Switch id="isento" checked={field.value} onCheckedChange={field.onChange} />
+          )}
+        />
+        <Label htmlFor="isento">Isento de pagamento</Label>
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancelar}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando…" : "Salvar"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
