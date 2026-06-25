@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+
+    // O compilador a nosso favor (mesmo rigor do backend).
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+
+    // Alias "@/..." → src/ (casado com o resolve.alias do Vite). Sem `baseUrl`
+    // (deprecado no TS 6): os `paths` resolvem relativos a este tsconfig.
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["src"]
+}
