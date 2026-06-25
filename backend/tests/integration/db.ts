@@ -7,12 +7,26 @@ import { prisma } from "../../src/config/prisma.js";
 
 export { prisma };
 
-/** O banco de teste está acessível? Decide se a suíte de integração roda ou pula. */
+/**
+ * O banco de teste está acessível? Decide se a suíte de integração roda ou pula.
+ *
+ * À PROVA DE VERDE-FALSO: no CI (`process.env.CI`, que o GitHub Actions seta como
+ * "true"), banco indisponível é FALHA DURA — lança em vez de devolver `false`, então
+ * a suíte de integração nunca pula silenciosamente lá (o `describe.skipIf` jamais vê
+ * `true`). Localmente, sem banco, devolve `false` e os testes de integração se
+ * auto-pulam — conveniência de dev (rode `npm run test:db` com o Postgres no ar).
+ */
 export async function bancoDisponivel(): Promise<boolean> {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return true;
   } catch {
+    if (process.env.CI) {
+      throw new Error(
+        "Banco de teste indisponível no CI: a suíte completa exige Postgres. " +
+          "Confira o service `postgres` e a DATABASE_URL (*_test) do workflow.",
+      );
+    }
     return false;
   }
 }

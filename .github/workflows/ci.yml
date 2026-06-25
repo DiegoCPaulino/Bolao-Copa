@@ -11,6 +11,27 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # DATABASE_URL de TESTE para a suíte COMPLETA rodar (serviços, rotas, auth, CLI).
+    # O nome do banco contém "_test" — exigência da trava em tests/integration/setup.ts.
+    # Aponta para o service `postgres` abaixo (mapeado em localhost:5432 no runner).
+    env:
+      DATABASE_URL: postgresql://bolao:bolao@localhost:5432/bolao_test?schema=public
+    services:
+      postgres:
+        image: postgres:17-alpine # mesma major do docker-compose local
+        env:
+          POSTGRES_USER: bolao
+          POSTGRES_PASSWORD: bolao
+          POSTGRES_DB: bolao_test
+        ports:
+          - 5432:5432
+        # Healthcheck: o GitHub espera o banco ficar PRONTO antes dos steps — sem isso a
+        # suíte poderia correr antes do Postgres subir (e voltaríamos ao verde-falso).
+        options: >-
+          --health-cmd "pg_isready -U bolao -d bolao_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -32,5 +53,12 @@ jobs:
       - name: Typecheck (tsc)
         run: npm run typecheck
 
-      - name: Testes (Vitest)
+      # Sincroniza o schema no banco de teste (db push, como o test:db local). Lê a
+      # DATABASE_URL do env do job. O @prisma/client já foi gerado no postinstall do npm ci.
+      - name: Prepara o schema do banco de teste
+        run: npx prisma db push --skip-generate
+
+      # Suíte COMPLETA contra o Postgres. CI=true (auto do GitHub) faz banco ausente
+      # FALHAR em vez de pular — nada de verde-falso por skip silencioso.
+      - name: Testes (Vitest — suíte completa)
         run: npm test
