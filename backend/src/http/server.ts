@@ -18,6 +18,7 @@ const app = buildApp({
   sessionSecret: env.SESSION_SECRET,
   organizadorSenhaHash: env.ORGANIZADOR_SENHA_HASH,
   cookieSecure: env.NODE_ENV === "production",
+  frontendOrigin: env.FRONTEND_ORIGIN,
 });
 
 app.listen({ port: env.PORT, host: "0.0.0.0" }).catch((erro) => {

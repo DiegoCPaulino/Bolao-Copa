@@ -15,6 +15,9 @@ const HASH_TESTE =
 /** Segredo de sessão de teste (>= 32 chars, como o schema exige). Não é real. */
 const SECRET_TESTE = "segredo-de-teste-com-mais-de-32-chars!!";
 
+/** Origem do front liberada pelo CORS nos testes (mesmo default de dev — Vite). */
+export const ORIGEM_TESTE = "http://localhost:5173";
+
 /** App pronto para `inject`, com auth fixa e logger desligado. cookieSecure=false (sem TLS). */
 export function buildAppTeste(): ReturnType<typeof buildApp> {
   const config: ConfigApp = {
@@ -22,6 +25,7 @@ export function buildAppTeste(): ReturnType<typeof buildApp> {
     sessionSecret: SECRET_TESTE,
     organizadorSenhaHash: HASH_TESTE,
     cookieSecure: false,
+    frontendOrigin: ORIGEM_TESTE,
   };
   return buildApp(config);
 }

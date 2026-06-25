@@ -1,3 +1,4 @@
+import cors from "@fastify/cors";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import { ZodError } from "zod";
 import { ErroDeDominio } from "../domain/erros.js";
@@ -44,8 +45,11 @@ type CorpoErro = {
   erro: { codigo: string; mensagem: string; detalhes?: unknown };
 };
 
-/** Configuração do app: logger (opcional) + auth (injetada — do `.env` ou, nos testes, fixa). */
-export type ConfigApp = { logger?: FastifyServerOptions["logger"] } & ConfigAuth;
+/** Configuração do app: logger (opcional) + origem do front (CORS) + auth (injetados). */
+export type ConfigApp = {
+  logger?: FastifyServerOptions["logger"];
+  frontendOrigin: string;
+} & ConfigAuth;
 
 export function buildApp(config: ConfigApp): FastifyInstance {
   const app = Fastify({ logger: config.logger ?? true });
@@ -84,10 +88,17 @@ export function buildApp(config: ConfigApp): FastifyInstance {
   // Saúde do bootstrap (PÚBLICA, sem auth) — smoke do esqueleto.
   app.get("/health", async () => ({ ok: true }));
 
-  // CORS: por ora a API não tem front (é consumida só pelos testes / server-to-server),
-  // então NÃO habilitamos CORS. Na Fase 7, quando o front entrar (origem própria),
-  // registrar `@fastify/cors` AQUI restrito à ORIGEM do front e com `credentials: true`
-  // — nunca `origin: "*"`, que é incompatível com o cookie de sessão. Ponto único.
+  // CORS (Fase 7): libera SÓ a origem do front (vem do `.env` → config), e com
+  // `credentials: true` para o cookie de sessão atravessar origens. NUNCA `origin: "*"`
+  // (o browser proíbe `*` junto de credenciais). A função libera requisições SEM Origin
+  // (curl, health check, server-to-server) e a origem permitida; qualquer outra é
+  // negada (sem header `Access-Control-Allow-Origin` → o browser bloqueia a resposta).
+  app.register(cors, {
+    origin: (origin, cb) => cb(null, !origin || origin === config.frontendOrigin),
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  });
 
   // Sessão por cookie + rotas públicas de auth (/auth/login, /auth/logout).
   registrarAuth(app, config);

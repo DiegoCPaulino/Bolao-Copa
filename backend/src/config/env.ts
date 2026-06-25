@@ -37,6 +37,11 @@ const envSchema = z.object({
   // TLS, Secure travaria o login, então fica `false` (default development).
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
+  // Origem do front liberada pelo CORS (Fase 7). Default = Vite em dev; em produção
+  // (Fase 9) basta trocar a env. NUNCA "*": incompatível com o cookie de sessão
+  // (credentials). Não é "essencial" (tem default), então não derruba o boot se faltar.
+  FRONTEND_ORIGIN: z.string().min(1).default("http://localhost:5173"),
+
   // Auth single-user (Fatia 6.2). Segredo de onde a sessão deriva sua chave de
   // cifragem (secure-session): mínimo de 32 chars por segurança.
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET deve ter ao menos 32 caracteres."),
