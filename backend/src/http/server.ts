@@ -7,9 +7,11 @@ import { buildApp } from "./app.js";
  * Ordem importa: PRIMEIRO valida o ambiente (aborta no boot se faltar variável),
  * só DEPOIS sobe o Fastify. Assim uma config inválida nunca chega a aceitar conexões.
  *
- * Host loopback (127.0.0.1) de propósito nesta fase (sem deploy ainda; Fase 9 define
- * o host). O cookie `Secure` só liga em produção: em dev local (http) ligá-lo travaria
- * o login, pois o navegador não enviaria o cookie sem TLS.
+ * Host 0.0.0.0 + porta de `process.env.PORT` (via env validado): exigido por um PaaS
+ * como o Render, que INJETA a PORT e roteia o tráfego para o container. A porta NUNCA
+ * é hardcoded — em dev cai no default do `.env` (3000). O cookie `Secure` liga só em
+ * produção (NODE_ENV=production): o Render serve HTTPS; em dev local (http) ligá-lo
+ * travaria o login, pois o navegador não enviaria o cookie sem TLS.
  */
 const env = carregarEnv();
 const app = buildApp({
@@ -18,7 +20,7 @@ const app = buildApp({
   cookieSecure: env.NODE_ENV === "production",
 });
 
-app.listen({ port: env.PORT, host: "127.0.0.1" }).catch((erro) => {
+app.listen({ port: env.PORT, host: "0.0.0.0" }).catch((erro) => {
   app.log.error(erro);
   process.exit(1);
 });

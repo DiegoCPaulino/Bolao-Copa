@@ -84,6 +84,11 @@ export function buildApp(config: ConfigApp): FastifyInstance {
   // Saúde do bootstrap (PÚBLICA, sem auth) — smoke do esqueleto.
   app.get("/health", async () => ({ ok: true }));
 
+  // CORS: por ora a API não tem front (é consumida só pelos testes / server-to-server),
+  // então NÃO habilitamos CORS. Na Fase 7, quando o front entrar (origem própria),
+  // registrar `@fastify/cors` AQUI restrito à ORIGEM do front e com `credentials: true`
+  // — nunca `origin: "*"`, que é incompatível com o cookie de sessão. Ponto único.
+
   // Sessão por cookie + rotas públicas de auth (/auth/login, /auth/logout).
   registrarAuth(app, config);
 

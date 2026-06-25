@@ -1,0 +1,12 @@
+{
+  // Config de BUILD de produção: o tsconfig.json base é só checador de tipos
+  // (noEmit) e inclui os testes; aqui ligamos a emissão e compilamos SÓ `src` para
+  // `dist/`. O dev (tsx) e o `typecheck` continuam usando o base, intactos.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}

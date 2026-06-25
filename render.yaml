@@ -1,0 +1,24 @@
+# Blueprint do Render — deploy de FUMAÇA da Fase 6 (mínimo pro backend subir no free
+# tier). NÃO é a Fase 9 (Docker/VPS/caprichado). Suba via "New > Blueprint" apontando
+# para o repositório. Os segredos (sync: false) são preenchidos no painel, nunca aqui.
+services:
+  - type: web # serviço HTTP exposto na internet, com HTTPS automático
+    name: bolao-backend
+    runtime: node # Node puro (sem Docker nesta fase)
+    plan: free # free tier: dorme após inatividade — ok para o piloto
+    rootDir: backend # o app vive em backend/; os comandos rodam a partir daí
+    # build: instala deps (e gera o Prisma Client, via script build) e compila TS -> dist/
+    buildCommand: npm ci && npm run build
+    # start: aplica as migrations existentes (migrate deploy, nunca migrate dev) e sobe
+    startCommand: npm run db:deploy && npm run start
+    healthCheckPath: /health # rota PÚBLICA que prova que o serviço subiu
+    envVars:
+      - key: NODE_ENV
+        value: production # liga o cookie Secure
+      - key: DATABASE_URL
+        sync: false # segredo — definir no painel do Render
+      - key: SESSION_SECRET
+        sync: false
+      - key: ORGANIZADOR_SENHA_HASH
+        sync: false
+      # PORT não é declarada: o Render a injeta e o server lê de process.env.PORT.
