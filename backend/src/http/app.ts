@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import { ZodError } from "zod";
 import { ErroDeDominio } from "../domain/erros.js";
 import { type ConfigAuth, exigirSessao, registrarAuth } from "./auth.js";
+import { rotasParticipantes } from "./routes/participantes.js";
 
 /**
  * Adaptador HTTP (Entrega 2) — apenas MAIS UM adaptador sobre os MESMOS serviços do
@@ -81,12 +82,13 @@ export function buildApp(config: ConfigApp): FastifyInstance {
   // Sessão por cookie + rotas públicas de auth (/auth/login, /auth/logout).
   registrarAuth(app, config);
 
-  // Escopo PROTEGIDO: o `preHandler` tranca tudo que for registrado aqui dentro. As
-  // rotas de feature da 6.3 entram neste escopo e já nascem exigindo sessão. /me é a
-  // rota de prova do loop login → sessão → acesso.
+  // Escopo PROTEGIDO: o `preHandler` tranca tudo que for registrado aqui dentro — as
+  // rotas de feature nascem exigindo sessão (sem cookie → 401). /me é a prova do loop
+  // login → sessão → acesso; as features entram como plugins (6.3a: participantes).
   app.register(async (protegidas) => {
     protegidas.addHook("preHandler", exigirSessao);
     protegidas.get("/me", async () => ({ autenticado: true }));
+    protegidas.register(rotasParticipantes);
   });
 
   return app;
