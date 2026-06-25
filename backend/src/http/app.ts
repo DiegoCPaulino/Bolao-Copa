@@ -2,7 +2,12 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import { ZodError } from "zod";
 import { ErroDeDominio } from "../domain/erros.js";
 import { type ConfigAuth, exigirSessao, registrarAuth } from "./auth.js";
+import { rotasPagamentos } from "./routes/pagamentos.js";
+import { rotasPainel } from "./routes/painel.js";
+import { rotasPalpites } from "./routes/palpites.js";
 import { rotasParticipantes } from "./routes/participantes.js";
+import { rotasRodadas } from "./routes/rodadas.js";
+import { rotasSelecoes } from "./routes/selecoes.js";
 
 /**
  * Adaptador HTTP (Entrega 2) — apenas MAIS UM adaptador sobre os MESMOS serviços do
@@ -88,7 +93,14 @@ export function buildApp(config: ConfigApp): FastifyInstance {
   app.register(async (protegidas) => {
     protegidas.addHook("preHandler", exigirSessao);
     protegidas.get("/me", async () => ({ autenticado: true }));
+    // Cada feature é um plugin no MESMO molde da rota-piloto (6.3a) — todas nascem
+    // protegidas. Fecha a Fase 6: todos os serviços expostos por HTTP.
     protegidas.register(rotasParticipantes);
+    protegidas.register(rotasPagamentos);
+    protegidas.register(rotasSelecoes);
+    protegidas.register(rotasRodadas);
+    protegidas.register(rotasPalpites);
+    protegidas.register(rotasPainel);
   });
 
   return app;
