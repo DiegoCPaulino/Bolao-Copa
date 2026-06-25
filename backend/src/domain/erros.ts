@@ -53,10 +53,6 @@ export class IndicadorNaoEncontrado extends ErroDeDominio {
 /** Indicação sem sentido lógico (ex.: participante indicando a si mesmo). */
 export class IndicacaoInvalida extends ErroDeDominio {
   readonly codigo = "INDICACAO_INVALIDA";
-
-  constructor(mensagem: string) {
-    super(mensagem);
-  }
 }
 
 /** Operação referenciou uma rodada (por id) que não existe. */
@@ -80,10 +76,6 @@ export class SelecaoInvalida extends ErroDeDominio {
 /** Jogo malformado (ex.: mesma seleção nos dois lados; rodada sem jogos). */
 export class JogoInvalido extends ErroDeDominio {
   readonly codigo = "JOGO_INVALIDO";
-
-  constructor(mensagem: string) {
-    super(mensagem);
-  }
 }
 
 /** Palpite referenciou um jogo que não pertence à rodada informada. */
@@ -101,10 +93,6 @@ export class JogoForaDaRodada extends ErroDeDominio {
 /** Placar de palpite inválido (gols devem ser inteiros >= 0). */
 export class PalpiteInvalido extends ErroDeDominio {
   readonly codigo = "PALPITE_INVALIDO";
-
-  constructor(mensagem: string) {
-    super(mensagem);
-  }
 }
 
 /** Operação referenciou um jogo (por id) que não existe. */
@@ -119,10 +107,6 @@ export class JogoNaoEncontrado extends ErroDeDominio {
 /** Placar de resultado real inválido (gols devem ser inteiros >= 0). */
 export class ResultadoInvalido extends ErroDeDominio {
   readonly codigo = "RESULTADO_INVALIDO";
-
-  constructor(mensagem: string) {
-    super(mensagem);
-  }
 }
 
 /** Pediu-se o resumo de um jogo que ainda não teve o resultado registrado. */

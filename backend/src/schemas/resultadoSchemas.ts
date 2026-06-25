@@ -1,15 +1,12 @@
 import { z } from "zod";
+import { golsSchema } from "./comuns.js";
 
 /**
  * Validação do placar real — na CASCA dos adaptadores (CLAUDE.md §3.1), em pasta
- * NEUTRA `schemas/` (fonte única CLI + HTTP). Gols = placar de 90 min: inteiros >= 0
- * (prorrogação/pênaltis não contam, §3.6).
+ * NEUTRA `schemas/` (fonte única CLI + HTTP). `golsSchema` (placar de 90 min, inteiro
+ * >= 0; prorrogação/pênaltis não contam, §3.6) vem de `comuns.js`, compartilhado com
+ * palpites.
  */
-
-const golsSchema = z
-  .number()
-  .int("Gols devem ser inteiros.")
-  .min(0, "Gols não podem ser negativos.");
 
 export const registrarResultadoInputSchema = z.object({
   jogoId: z.string().min(1, "Selecione um jogo."),

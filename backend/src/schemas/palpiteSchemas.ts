@@ -1,15 +1,11 @@
 import { z } from "zod";
+import { golsSchema } from "./comuns.js";
 
 /**
  * Validação de Palpites — na CASCA dos adaptadores (CLAUDE.md §3.1), em pasta NEUTRA
- * `schemas/` (fonte única CLI + HTTP). Gols = placar de 90 min: inteiros >= 0 (empate
- * é palpite válido, §8.1).
+ * `schemas/` (fonte única CLI + HTTP). `golsSchema` (placar de 90 min, inteiro >= 0;
+ * empate é válido, §8.1) vem de `comuns.js`, compartilhado com resultados.
  */
-
-const golsSchema = z
-  .number()
-  .int("Gols devem ser inteiros.")
-  .min(0, "Gols não podem ser negativos.");
 
 const palpiteJogoSchema = z.object({
   jogoId: z.string().min(1),

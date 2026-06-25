@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { statusPagamentoSchema } from "./comuns.js";
 
 /**
  * Validação de ENTRADA de participante — vive na CASCA dos adaptadores (CLAUDE.md
@@ -48,6 +49,6 @@ export type ParticipanteInput = z.infer<typeof participanteInputSchema>;
  */
 export const listarParticipantesQuerySchema = z.object({
   busca: z.string().trim().min(1).optional(),
-  status: z.enum(["PAGO", "PENDENTE"]).optional(),
+  status: statusPagamentoSchema.optional(),
   ordenarPor: z.enum(["nome", "criadoEm"]).optional(),
 });
