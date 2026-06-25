@@ -1,18 +1,32 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Home } from "@/pages/Home";
+import { AuthProvider } from "@/auth/AuthContext";
+import { AppLayout } from "@/components/AppLayout";
+import { RotaProtegida } from "@/components/RotaProtegida";
+import { EmConstrucao } from "@/pages/EmConstrucao";
+import { Login } from "@/pages/Login";
+import { Painel } from "@/pages/Painel";
 
 /**
- * Roteador mínimo (Fatia 7.1) — uma rota de teste prova a base: React + Vite +
- * Tailwind + shadcn + roteamento. As telas de verdade (login, painel, ...) entram na
- * Fase 8; o cliente HTTP e o login, na 7.2. O front SÓ consome a API — não recalcula
- * regra nem formata texto de WhatsApp (CLAUDE.md §3.1).
+ * Base do front (Fatia 7.2): /login pública + rotas do app sob o wrapper protegido
+ * (sessão via cookie). As telas reais entram na Fase 8 (hoje são stubs). O front SÓ
+ * consome a API — não recalcula regra nem formata WhatsApp (CLAUDE.md §3.1/§3.4).
  */
 export function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<RotaProtegida />}>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Painel />} />
+              <Route path="/participantes" element={<EmConstrucao titulo="Participantes" />} />
+              <Route path="/pagamentos" element={<EmConstrucao titulo="Pagamentos" />} />
+              <Route path="/rodadas" element={<EmConstrucao titulo="Rodadas e jogos" />} />
+            </Route>
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

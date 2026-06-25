@@ -1,3 +1,0 @@
-# Reserva da pasta do cliente HTTP (Fatia 7.2): aqui mora o `fetch` centralizado que
-# conhece o contrato da API (chamadas com `credentials: "include"` para a sessão).
-# Vazio de propósito por ora — o front desta fatia (7.1) ainda não chama a API.
