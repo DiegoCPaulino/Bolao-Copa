@@ -1,7 +1,7 @@
 import { confirm, input, select } from "@inquirer/prompts";
+import { participanteInputSchema } from "../../schemas/participanteSchemas.js";
 import type { Participante, ParticipanteComIndicador } from "../../services/participanteService.js";
 import * as participantes from "../../services/participanteService.js";
-import { participanteInputSchema } from "../schemas/participanteSchemas.js";
 
 /**
  * Submenu de Participantes — parte do ADAPTADOR (CLAUDE.md §5): pergunta, chama o
