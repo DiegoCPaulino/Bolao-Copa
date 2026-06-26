@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { VenetianMask } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ const formSchema = z.object({
   apelido: z.string().trim(),
   indicadorId: z.string(),
   isento: z.boolean(),
+  exibirComoPago: z.boolean(),
 });
 type FormCampos = z.infer<typeof formSchema>;
 
@@ -199,7 +201,22 @@ export function Participantes() {
                       {p.indicador ? rotulo(p.indicador) : "—"}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={p.status} />
+                      {/* Visão INTERNA mostra a VERDADE: o badge é sempre o status REAL.
+                          Quando o participante está marcado p/ aparecer como pago no grupo
+                          (e ainda não pagou de fato), um marcador discreto avisa — legível
+                          POR SI (ícone + texto), sem depender de hover (§8.8; mobile). */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={p.status} />
+                        {p.exibirComoPago && p.status !== "PAGO" && (
+                          <span
+                            className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-info"
+                            title="Aparece como pago na exportação do WhatsApp (status real: pendente)"
+                          >
+                            <VenetianMask className="size-3.5" aria-hidden />
+                            exibido como pago
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {p.isento ? (
@@ -318,6 +335,7 @@ function FormParticipante({
       apelido: editando?.apelido ?? "",
       indicadorId: editando?.indicadorId ?? NENHUM,
       isento: editando?.isento ?? false,
+      exibirComoPago: editando?.exibirComoPago ?? false,
     },
   });
 
@@ -327,6 +345,7 @@ function FormParticipante({
       apelido: campos.apelido.trim() === "" ? null : campos.apelido.trim(),
       indicadorId: campos.indicadorId === NENHUM ? null : campos.indicadorId,
       isento: campos.isento,
+      exibirComoPago: campos.exibirComoPago,
     };
     try {
       if (editando) {
@@ -387,6 +406,22 @@ function FormParticipante({
           )}
         />
         <Label htmlFor="isento">Isento de pagamento</Label>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Controller
+          control={control}
+          name="exibirComoPago"
+          render={({ field }) => (
+            <Switch id="exibirComoPago" checked={field.value} onCheckedChange={field.onChange} />
+          )}
+        />
+        <Label htmlFor="exibirComoPago" className="leading-snug">
+          Exibir como pago no grupo
+          <span className="block text-xs font-normal text-muted-foreground">
+            Só maquia a exportação do WhatsApp — não muda o status real.
+          </span>
+        </Label>
       </div>
 
       <DialogFooter>

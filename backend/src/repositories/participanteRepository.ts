@@ -24,6 +24,9 @@ export type DadosGravaveis = {
   apelido: string | null;
   indicadorId: string | null;
   isento: boolean;
+  // Override de APRESENTAÇÃO (funcional §8.8): é INPUT do organizador, por isso se
+  // grava — não é derivado. Só afeta a EXPORTAÇÃO; `status` segue sendo a verdade.
+  exibirComoPago: boolean;
 };
 
 /** Opções de listagem: busca/filtro/ordenação simples (funcional §9.1, item 2). */

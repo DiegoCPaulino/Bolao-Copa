@@ -30,6 +30,9 @@ export type DadosParticipante = {
   // participante do universo de cobrança (quem filtra é o pagamentoService).
   // Opcional por conveniência: ausente = não isento (o Zod do adaptador já manda boolean).
   isento?: boolean;
+  // Exibir como pago no grupo (funcional §8.8): override de APRESENTAÇÃO, só na
+  // exportação. Opcional como `isento`: ausente = false (o Zod do adaptador já resolve).
+  exibirComoPago?: boolean;
 };
 
 export type { Participante, ParticipanteComIndicador };
@@ -42,6 +45,7 @@ export async function criarParticipante(dados: DadosParticipante): Promise<Parti
     apelido: dados.apelido,
     indicadorId: dados.indicadorId,
     isento: dados.isento ?? false,
+    exibirComoPago: dados.exibirComoPago ?? false,
   });
 }
 
@@ -57,6 +61,7 @@ export async function atualizarParticipante(
     apelido: dados.apelido,
     indicadorId: dados.indicadorId,
     isento: dados.isento ?? false,
+    exibirComoPago: dados.exibirComoPago ?? false,
   });
 }
 

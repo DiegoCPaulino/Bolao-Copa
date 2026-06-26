@@ -129,6 +129,43 @@ describe.skipIf(!temBanco)("pagamentoService (integração com Postgres)", () =>
     });
   });
 
+  describe("visão pública (exibir como pago no grupo) — §8.8", () => {
+    it("a exportação conta o pendente maquiado em recebido/falta; a visão real NÃO", async () => {
+      await criar("Ana", null, "PAGO"); // paga 40 de verdade
+      const bruno = await criar("Bruno", null, "PENDENTE"); // deve 40
+      await criar("Carla", null, "PENDENTE"); // deve 40 (pendente de verdade)
+      // Bruno é MAQUIADO: aparece como pago no grupo, sem mudar o status real.
+      await prisma.participante.update({
+        where: { id: bruno.id },
+        data: { exibirComoPago: true },
+      });
+
+      // Visão REAL (painel/CLI/tabela): a verdade — só Ana pagou.
+      const real = await service.listarPagamentos();
+      expect(real.totais).toEqual({ esperado: 120, recebido: 40, falta: 80 });
+      expect(real.participantes.find((p) => p.id === bruno.id)?.status).toBe("PENDENTE");
+
+      // Visão PÚBLICA (exportação): Bruno entra como PAGO nas seções E nos totais —
+      // assim o prêmio (de `recebido`) fica consistente e a soma não denuncia.
+      const publico = await service.listarPagamentosPublico();
+      expect(publico.totais).toEqual({ esperado: 120, recebido: 80, falta: 40 });
+      expect(publico.participantes.find((p) => p.id === bruno.id)?.status).toBe("PAGO");
+      // Pendente de verdade e NÃO maquiado segue pendente até na visão pública.
+      expect(publico.participantes.find((p) => p.nome === "Carla")?.status).toBe("PENDENTE");
+    });
+
+    it("o override só mexe em recebido/falta; `esperado` é igual nas duas visões", async () => {
+      const a = await criar("Ana", null, "PENDENTE");
+      await prisma.participante.update({ where: { id: a.id }, data: { exibirComoPago: true } });
+
+      const real = await service.listarPagamentos();
+      const publico = await service.listarPagamentosPublico();
+      expect(publico.totais.esperado).toBe(real.totais.esperado); // status-independente
+      expect(real.totais.recebido).toBe(0); // verdade: ninguém pagou
+      expect(publico.totais.recebido).toBe(40); // maquiado entra na exportação
+    });
+  });
+
   describe("alternarStatus", () => {
     it("alterna Pago⇄Pendente e persiste", async () => {
       const a = await criar("Ana"); // PENDENTE

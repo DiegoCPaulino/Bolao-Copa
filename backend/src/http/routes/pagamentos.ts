@@ -20,7 +20,10 @@ export async function rotasPagamentos(app: FastifyInstance): Promise<void> {
   });
 
   app.get("/pagamentos/export", async (_req, reply) => {
-    const { participantes, totais } = await pagamentos.listarPagamentos();
+    // Visão PÚBLICA (funcional §8.8): quem está "exibir como pago" entra como PAGO nas
+    // seções E nos totais — daí o prêmio (de `recebido`) sai consistente, sem denúncia.
+    // A verdade fica nas saídas internas (painel/CLI/tabela), que usam `listarPagamentos`.
+    const { participantes, totais } = await pagamentos.listarPagamentosPublico();
     // Só os 75% vão para o grupo (mesma regra de domínio do painel: dividirPote).
     const premiacao = {
       premiacaoAtual: dividirPote(totais.recebido).premiacao,

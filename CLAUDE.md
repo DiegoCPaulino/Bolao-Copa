@@ -408,6 +408,23 @@ Ordene por, nesta ordem exata:
 - Status é **só informativo** — **não afeta pontuação nem classificação**.
 - Totais (derivados): **Total esperado** = soma dos valores a pagar de todos; **Total
   recebido** = soma dos valores de quem está "Pago"; **Falta receber** = esperado − recebido.
+- **"Exibir como pago no grupo"** (funcional §8.8.1): booleano **ortogonal** por participante
+  (padrão `false`, mesmo padrão de `isento`). É **override de APRESENTAÇÃO, não um status** —
+  **não** se cria um terceiro valor no enum. O `status` continua sendo a **verdade**; o
+  sinalizador **só maquia a exportação** do WhatsApp. É **input** do organizador (por isso se
+  grava — **não** é derivado armazenado; ver §3.2). Implementação canônica:
+  - função pura `statusPublico({status, exibirComoPago})` → `PAGO` se `status==="PAGO"` **ou**
+    `exibirComoPago`, senão `PENDENTE`;
+  - **uma só** função de totais (`calcularTotaisPagamento`) **reusada com duas entradas**:
+    status **reais** (visão interna) **ou** status **públicos** (visão de exportação) — nunca
+    uma segunda soma;
+  - **exportação consistente**: na visão pública o maquiado conta como pago **também** em
+    `Recebido`/`Falta` e no **prêmio** (só a exportação usa `listarPagamentosPublico`; painel,
+    CLI-listar e tabela do front usam `listarPagamentos`, real). `Esperado`/`prêmio potencial`
+    independem de status → iguais nas duas visões.
+  - **visão interna nunca mostra "Pago" puro** para o maquiado: exibe o status **real** +
+    marcador discreto (front: ícone + texto legível por si, não só `title`; CLI: `(exibido
+    como pago)`).
 
 ### 7.5 Constantes do domínio
 

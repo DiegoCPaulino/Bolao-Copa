@@ -37,6 +37,9 @@ export const participanteInputSchema = z.object({
   // Isento de pagamento: o CLI sempre manda o boolean do `confirm`; o `default(false)`
   // cobre o corpo HTTP quando o campo vem ausente (= não isento).
   isento: z.boolean().default(false),
+  // Exibir como pago no grupo (funcional §8.8): mesmo padrão de `isento`. Override de
+  // apresentação, só afeta a exportação; default false cobre o corpo HTTP sem o campo.
+  exibirComoPago: z.boolean().default(false),
 });
 
 export type ParticipanteInput = z.infer<typeof participanteInputSchema>;

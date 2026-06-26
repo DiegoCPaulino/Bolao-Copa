@@ -93,9 +93,19 @@ async function cadastrar(): Promise<void> {
   const apelido = await input({ message: "Apelido (opcional, Enter p/ pular)" });
   const indicadorId = await selecionarIndicador("Indicado por", null, null);
   const isento = await confirm({ message: "Isento de pagamento?", default: false });
+  const exibirComoPago = await confirm({
+    message: "Exibir como pago no grupo? (só maquia a exportação; não muda o status real)",
+    default: false,
+  });
 
   // Zod (casca) transforma a entrada crua no dado tipado do serviço.
-  const dados = participanteInputSchema.parse({ nome, apelido, indicadorId, isento });
+  const dados = participanteInputSchema.parse({
+    nome,
+    apelido,
+    indicadorId,
+    isento,
+    exibirComoPago,
+  });
   const criado = await participantes.criarParticipante(dados);
   console.log(`\n✅ Cadastrado: ${rotulo(criado)}\n`);
 }
@@ -114,8 +124,18 @@ async function editar(): Promise<void> {
   // Exclui o próprio da lista de indicadores (ninguém indica a si mesmo).
   const indicadorId = await selecionarIndicador("Indicado por", alvo.id, alvo.indicadorId);
   const isento = await confirm({ message: "Isento de pagamento?", default: alvo.isento });
+  const exibirComoPago = await confirm({
+    message: "Exibir como pago no grupo? (só maquia a exportação; não muda o status real)",
+    default: alvo.exibirComoPago,
+  });
 
-  const dados = participanteInputSchema.parse({ nome, apelido, indicadorId, isento });
+  const dados = participanteInputSchema.parse({
+    nome,
+    apelido,
+    indicadorId,
+    isento,
+    exibirComoPago,
+  });
   const atualizado = await participantes.atualizarParticipante(alvo.id, dados);
   console.log(`\n✅ Atualizado: ${rotulo(atualizado)}\n`);
 }
@@ -157,8 +177,13 @@ function linhaParticipante(p: ParticipanteComIndicador): string {
   // Isento aparece na lista de Participantes (ele disputa!), mas com o status de
   // pagamento substituído por "isento" — ele não está nem "pago" nem "pendente".
   const situacao = p.isento ? "isento" : p.status === "PAGO" ? "pago" : "pendente";
+  // Visão INTERNA mostra a VERDADE: um pendente "exibir como pago" continua [pendente]
+  // aqui, só com o aviso de que aparece como pago NA EXPORTAÇÃO (funcional §8.8). Nunca
+  // "pago" puro. O marcador textual é legível por si só (não depende de cor/hover).
+  const mascara =
+    !p.isento && p.status !== "PAGO" && p.exibirComoPago ? " 🎭 (exibido como pago)" : "";
   const indicacao = p.indicador ? ` — indicado por ${rotulo(p.indicador)}` : "";
-  return `${rotulo(p)} [${situacao}]${indicacao}`;
+  return `${rotulo(p)} [${situacao}]${mascara}${indicacao}`;
 }
 
 /** Escolhe um participante existente; null (e avisa) se ainda não há nenhum. */

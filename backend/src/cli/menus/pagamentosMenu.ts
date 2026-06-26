@@ -77,7 +77,9 @@ async function alternar(): Promise<void> {
 }
 
 async function exportar(): Promise<void> {
-  const { participantes, totais } = await pagamentos.listarPagamentos();
+  // Visão PÚBLICA (funcional §8.8): "exibir como pago" entra como PAGO nas seções E nos
+  // totais → o prêmio (de `recebido`) sai consistente. A verdade fica no "Listar" (real).
+  const { participantes, totais } = await pagamentos.listarPagamentosPublico();
   // Só os 75% (premiação) vão para o grupo, no formato atual / potencial. `dividirPote`
   // é a MESMA regra de domínio do Resumo geral (não reimplementamos cálculo aqui); o
   // formatador (§12.7) recebe os valores JÁ prontos e devolve string — o CLI só imprime.

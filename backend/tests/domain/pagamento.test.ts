@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calcularTotaisPagamento, calcularValorAPagar } from "../../src/domain/pagamento.js";
+import {
+  calcularTotaisPagamento,
+  calcularValorAPagar,
+  statusPublico,
+} from "../../src/domain/pagamento.js";
 
 describe("calcularValorAPagar (regra de indicação — funcional §8.7)", () => {
   // Tabela transcrita direto do funcional §8.7: cada indicado direto que entrou
@@ -71,5 +75,42 @@ describe("calcularTotaisPagamento (totais do bolão — funcional §8.8)", () =>
       recebido: 60,
       falta: 35,
     });
+  });
+});
+
+describe("statusPublico (override de apresentação — funcional §8.8)", () => {
+  // A verdade é `status`; `exibirComoPago` só maquia a EXPORTAÇÃO. A função pura
+  // resolve a visão pública: PAGO se já pago OU marcado para exibir como pago.
+  it.each([
+    { status: "PAGO" as const, exibirComoPago: false, publico: "PAGO" },
+    { status: "PAGO" as const, exibirComoPago: true, publico: "PAGO" },
+    { status: "PENDENTE" as const, exibirComoPago: true, publico: "PAGO" },
+    { status: "PENDENTE" as const, exibirComoPago: false, publico: "PENDENTE" },
+  ])("status=$status, exibirComoPago=$exibirComoPago → $publico", ({
+    status,
+    exibirComoPago,
+    publico,
+  }) => {
+    expect(statusPublico({ status, exibirComoPago })).toBe(publico);
+  });
+});
+
+describe("calcularTotaisPagamento alimentada com status PÚBLICOS (visão de exportação)", () => {
+  // A MESMA função de soma, com duas entradas. Aqui provamos que, na visão pública,
+  // o pendente "exibido como pago" CONTA em recebido/falta — senão a soma do prêmio
+  // denunciaria o truque (funcional §8.8; CLAUDE.md §7.4).
+  const linhas = [
+    { valorAPagar: 40, status: "PAGO" as const, exibirComoPago: false },
+    { valorAPagar: 35, status: "PENDENTE" as const, exibirComoPago: true }, // maquiado
+    { valorAPagar: 20, status: "PENDENTE" as const, exibirComoPago: false },
+  ];
+
+  it("visão REAL: só o PAGO de verdade entra em recebido", () => {
+    expect(calcularTotaisPagamento(linhas)).toEqual({ esperado: 95, recebido: 40, falta: 55 });
+  });
+
+  it("visão PÚBLICA: o exibido-como-pago também entra em recebido/falta", () => {
+    const publicas = linhas.map((l) => ({ valorAPagar: l.valorAPagar, status: statusPublico(l) }));
+    expect(calcularTotaisPagamento(publicas)).toEqual({ esperado: 95, recebido: 75, falta: 20 });
   });
 });

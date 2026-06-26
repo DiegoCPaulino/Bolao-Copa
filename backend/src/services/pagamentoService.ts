@@ -1,6 +1,10 @@
 import { ParticipanteNaoEncontrado } from "../domain/erros.js";
 import type { StatusPagamento, TotaisPagamento } from "../domain/pagamento.js";
-import { calcularTotaisPagamento, calcularValorAPagar } from "../domain/pagamento.js";
+import {
+  calcularTotaisPagamento,
+  calcularValorAPagar,
+  statusPublico,
+} from "../domain/pagamento.js";
 import type { Participante } from "../repositories/participanteRepository.js";
 import * as repo from "../repositories/participanteRepository.js";
 
@@ -20,6 +24,8 @@ export type PagamentoParticipante = {
   nome: string;
   apelido: string | null;
   valorAPagar: number;
+  // Na visão REAL este é o status gravado (a verdade); na visão PÚBLICA, o status já
+  // resolvido por `statusPublico`. Mesmo tipo, duas visões — quem decide é o chamador.
   status: StatusPagamento;
 };
 
@@ -28,8 +34,12 @@ export type ResumoPagamentos = {
   totais: TotaisPagamento;
 };
 
+/** Linha-base de cobrança: além do que a UI mostra, carrega o `exibirComoPago` para
+ *  que as duas visões (real e pública) sejam construídas a partir da MESMA derivação. */
+type LinhaCobranca = PagamentoParticipante & { exibirComoPago: boolean };
+
 /**
- * Calcula o quadro de pagamentos derivado de TODOS os participantes.
+ * Derivação ÚNICA e cara do quadro de cobrança (privada) — funcional §8.7/§8.8.
  *
  * Fluxo do derivado:
  *  1. lê todos os participantes (uma query) — cada um traz seu `indicadorId`;
@@ -41,19 +51,21 @@ export type ResumoPagamentos = {
  *     (`calcularValorAPagar`/`calcularTotaisPagamento`) não conhecem isenção e
  *     recebem só quem realmente paga (CLAUDE.md §3.1/§3.3);
  *  4. cada valor a pagar = `calcularValorAPagar(nº de indicados diretos)` (já aplica
- *     desconto e piso);
- *  5. os 3 totais saem de `calcularTotaisPagamento` sobre os valores derivados.
+ *     desconto e piso).
  *
  * Nota sobre indicação × isenção: a contagem de indicados roda sobre TODOS (passo 2),
  * antes do filtro. Um indicado isento ENTROU no bolão, então continua abatendo R$ 5
  * do seu indicador (funcional §8.7) — a isenção tira o próprio isento da cobrança,
  * não desfaz a indicação que ele gerou.
+ *
+ * Os totais (esperado/recebido/falta) NÃO saem daqui: cada visão (real/pública)
+ * escolhe o status a somar e chama a MESMA `calcularTotaisPagamento` (sem 2ª soma).
  */
-export async function listarPagamentos(): Promise<ResumoPagamentos> {
+async function derivarCobranca(): Promise<LinhaCobranca[]> {
   const todos = await repo.listarTodos();
   const indicadosPorId = contarIndicadosDiretos(todos);
 
-  const participantes: PagamentoParticipante[] = todos
+  return todos
     .filter((p) => !p.isento)
     .map((p) => ({
       id: p.id,
@@ -61,8 +73,44 @@ export async function listarPagamentos(): Promise<ResumoPagamentos> {
       apelido: p.apelido,
       valorAPagar: calcularValorAPagar(indicadosPorId.get(p.id) ?? 0),
       status: p.status,
+      exibirComoPago: p.exibirComoPago,
     }));
+}
 
+/**
+ * Quadro de pagamentos REAL — a VERDADE. Usado pelo painel, pelo CLI "listar" e pela
+ * tabela do front. O `status` é o gravado; os totais somam só quem está PAGO de fato.
+ */
+export async function listarPagamentos(): Promise<ResumoPagamentos> {
+  const participantes: PagamentoParticipante[] = (await derivarCobranca()).map((l) => ({
+    id: l.id,
+    nome: l.nome,
+    apelido: l.apelido,
+    valorAPagar: l.valorAPagar,
+    status: l.status, // status REAL (a verdade)
+  }));
+  return { participantes, totais: calcularTotaisPagamento(participantes) };
+}
+
+/**
+ * Quadro de pagamentos PÚBLICO — a visão de EXPORTAÇÃO para o grupo (funcional §8.8).
+ *
+ * Mesma derivação base, mas o status de cada participante passa por `statusPublico`
+ * (um pendente marcado "exibir como pago" vira PAGO) e os totais saem da MESMA
+ * `calcularTotaisPagamento`, agora alimentada com esses status públicos. Resultado:
+ * as seções do texto (✅ Pagos / ⏳ Pendentes) E os números (recebido/falta → prêmio)
+ * ficam consistentes — a soma não denuncia o truque (CLAUDE.md §7.4).
+ *
+ * SÓ a exportação usa esta visão; toda saída interna usa `listarPagamentos` (real).
+ */
+export async function listarPagamentosPublico(): Promise<ResumoPagamentos> {
+  const participantes: PagamentoParticipante[] = (await derivarCobranca()).map((l) => ({
+    id: l.id,
+    nome: l.nome,
+    apelido: l.apelido,
+    valorAPagar: l.valorAPagar,
+    status: statusPublico(l), // status PÚBLICO: pendente "exibido como pago" vira PAGO
+  }));
   return { participantes, totais: calcularTotaisPagamento(participantes) };
 }
 

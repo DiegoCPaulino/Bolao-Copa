@@ -23,6 +23,26 @@ export function calcularValorAPagar(qtdIndicadosDiretos: number): number {
 /** Status de pagamento de um participante — funcional §8.8 (padrão PENDENTE). */
 export type StatusPagamento = "PAGO" | "PENDENTE";
 
+/**
+ * Status PÚBLICO de um participante — funcional §8.8; CLAUDE.md §7.4.
+ *
+ * `status` é a VERDADE (Pago/Pendente); `exibirComoPago` é um override de
+ * APRESENTAÇÃO que só vale na EXPORTAÇÃO do WhatsApp: o organizador quer que
+ * alguém pendente apareça como pago no grupo sem mudar a verdade interna.
+ *
+ * Função PURA: a visão pública é DERIVADA (nunca armazenada). Quem decide usá-la é
+ * a exportação; o painel/CLI/tabela usam o `status` real. Reusa a MESMA
+ * `calcularTotaisPagamento`, agora alimentada com estes status públicos — assim
+ * recebido/falta/prêmio ficam consistentes com as seções do texto (nada de segunda
+ * função de soma).
+ */
+export function statusPublico(participante: {
+  status: StatusPagamento;
+  exibirComoPago: boolean;
+}): StatusPagamento {
+  return participante.status === "PAGO" || participante.exibirComoPago ? "PAGO" : "PENDENTE";
+}
+
 /** Totais agregados do bolão — funcional §8.8. Todos derivados, nunca armazenados. */
 export type TotaisPagamento = {
   esperado: number;

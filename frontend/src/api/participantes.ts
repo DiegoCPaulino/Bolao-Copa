@@ -13,6 +13,9 @@ export type Participante = {
   apelido: string | null;
   status: StatusPagamento;
   isento: boolean;
+  // Override de APRESENTAÇÃO (funcional §8.8): `status` continua sendo a verdade; este
+  // boolean só faz o participante aparecer como pago NA EXPORTAÇÃO do WhatsApp.
+  exibirComoPago: boolean;
   indicadorId: string | null;
   criadoEm: string;
   indicador: { id: string; nome: string; apelido: string | null } | null;
@@ -24,6 +27,7 @@ export type DadosParticipante = {
   apelido?: string | null;
   indicadorId?: string | null;
   isento?: boolean;
+  exibirComoPago?: boolean;
 };
 
 /** Filtros server-side que a rota aceita. A tela 8.1 filtra CLIENT-SIDE (ver Participantes.tsx),

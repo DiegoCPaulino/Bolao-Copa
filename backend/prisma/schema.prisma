@@ -59,6 +59,11 @@ model Participante {
   // mas fica FORA da cobrança — sem valor a pagar, fora dos totais e do artefato
   // §12.7. Gravamos o FATO (boolean), nunca um "valor R$0" derivado (CLAUDE.md §3.2).
   isento   Boolean         @default(false)
+  // Exibir como pago no grupo (funcional §8.8; CLAUDE.md §7.4): override de
+  // APRESENTAÇÃO, não um status. `status` continua sendo a verdade; este boolean só
+  // maquia a EXPORTAÇÃO do WhatsApp (visão pública). É INPUT do organizador — por isso
+  // se grava (mesmo padrão de `isento`); NÃO é dado derivado (CLAUDE.md §3.2).
+  exibirComoPago Boolean    @default(false)
   criadoEm DateTime        @default(now())
 
   // Indicação AUTO-REFERENTE (o ponto mais interessante da modelagem, arq. §4.5):
