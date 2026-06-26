@@ -174,6 +174,29 @@ existe a marcação **"exibir como pago no grupo"** por participante (padrão **
 - **Onde se altera:** na **edição do participante** (ao lado de "isento"). Não há tela nem
   número que use a visão pública fora da exportação do WhatsApp.
 
+### 8.9 Premiação (divisão do pote)
+O sistema **calcula e exibe** a divisão do pote arrecadado. **Não movimenta dinheiro** (sem
+gateway/transação — ver §15); apenas mostra os números.
+
+- **Divisão fixa: 75% para a premiação · 25% para o organizador.** A fração da premiação é
+  uma constante de domínio (`FRACAO_PREMIACAO = 0,75`); o organizador recebe **o resto** da
+  divisão. Arredonda-se **só a premiação** e dá-se o resto ao organizador, de modo que
+  **premiação + organizador = total exato** sempre (sem centavo perdido no arredondamento).
+- **O pote é o total de pagamento** (a soma dos valores a pagar — §8.8). Como o pagamento tem
+  duas leituras (esperado/recebido), a premiação também tem duas:
+  - **Prêmio atual** = 75% sobre o **recebido** (o que já entrou);
+  - **Prêmio potencial** = 75% sobre o **esperado** (se todos pagarem);
+  - de forma análoga, o **ganho do organizador** (atual/potencial) são os 25% sobre
+    recebido/esperado.
+- **Público vs. privado:** a exportação de pagamentos para o grupo (§13.7) mostra **apenas a
+  premiação** (atual / potencial). O **pote bruto, os totais esperado/recebido/falta e a
+  fatia de 25% do organizador são privados** — aparecem só na visão interna (painel/resumo
+  geral), nunca no texto do grupo.
+- **Interação com "exibir como pago" (§8.8.1):** como o prêmio atual deriva do **recebido**,
+  na **visão pública** (exportação) quem está marcado "exibir como pago" entra no recebido e,
+  portanto, **no prêmio atual** — mantendo o texto internamente consistente. A **visão
+  interna** usa o recebido **real**.
+
 ## 9. Funcionalidades principais
 
 **Participantes e pagamentos**
@@ -327,7 +350,7 @@ Separar o que é **armazenado** do que é **derivado** (calculado na hora): deri
 - **Não envia mensagens automaticamente** (o organizador copia e cola).
 - **Não busca resultados** automaticamente.
 - **Não cobre a fase de grupos.**
-- **Não movimenta dinheiro de verdade** (sem transações/gateway) e **não calcula premiação**. Apenas **calcula e exibe** o valor devido e **registra** Pago/Pendente.
+- **Não movimenta dinheiro de verdade** (sem transações/gateway): o sistema **calcula e exibe** o valor devido, **registra** Pago/Pendente e **calcula/exibe a premiação** (divisão do pote 75/25 — §8.9), mas **não desembolsa nem processa pagamentos**.
 - **Não possui** notificações, chat interno nem rede social.
 
 ## 16. Requisitos não-funcionais

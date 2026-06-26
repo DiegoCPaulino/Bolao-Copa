@@ -428,9 +428,10 @@ Ordene por, nesta ordem exata:
 
 ### 7.5 Constantes do domínio
 
-`VALOR_BASE = 40`, `DESCONTO_POR_INDICACAO = 5`, `PISO = 5`. Ficam **nomeadas num único
-módulo de configuração de domínio** — nunca espalhadas como números mágicos. Se a regra
-mudar, muda num lugar só. (Arquitetura §5.2; Roteiro Fase 1 passo 2.)
+`VALOR_BASE = 40`, `DESCONTO_POR_INDICACAO = 5`, `PISO = 5`, `FRACAO_PREMIACAO = 0.75`
+(75% do pote → premiação; os 25% restantes → ganho do organizador; funcional §8.9). Ficam
+**nomeadas num único módulo de configuração de domínio** — nunca espalhadas como números
+mágicos. Se a regra mudar, muda num lugar só. (Arquitetura §5.2; Roteiro Fase 1 passo 2.)
 
 ---
 
