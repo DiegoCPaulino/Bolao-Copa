@@ -174,6 +174,19 @@ existe a marcação **"exibir como pago no grupo"** por participante (padrão **
 - **Onde se altera:** na **edição do participante** (ao lado de "isento"). Não há tela nem
   número que use a visão pública fora da exportação do WhatsApp.
 
+### 8.8.2 Isento de pagamento
+Um participante pode ser marcado como **isento** (padrão **desligado**). Ele **disputa o
+bolão normalmente** (palpites, pontos, classificação), mas fica **fora da cobrança**.
+
+- **Efeito:** o isento **não tem valor a pagar**, **não entra nos totais**
+  (esperado/recebido/falta) e **não aparece** no artefato de pagamentos (§13.7). É um
+  **sinalizador independente** (ortogonal ao status Pago/Pendente), gravado como **fato** —
+  nunca um "valor R$ 0" derivado.
+- **Não desfaz indicação:** um **indicado** isento ainda **conta** para o desconto de quem o
+  indicou — ele **entrou** no bolão (§8.7). A isenção tira o próprio isento da cobrança; não
+  anula a indicação que ele gerou.
+- **Onde se altera:** na edição do participante (ao lado de "exibir como pago").
+
 ### 8.9 Premiação (divisão do pote)
 O sistema **calcula e exibe** a divisão do pote arrecadado. **Não movimenta dinheiro** (sem
 gateway/transação — ver §15); apenas mostra os números.
@@ -200,7 +213,7 @@ gateway/transação — ver §15); apenas mostra os números.
 ## 9. Funcionalidades principais
 
 **Participantes e pagamentos**
-1. **Gerenciar participantes** — nome, **apelido** (opcional, p/ homônimos), **indicado por** (opcional, selecionando existente) e **status**. Lista **travada quando o bolão começa**.
+1. **Gerenciar participantes** — nome, **apelido** (opcional, p/ homônimos), **indicado por** (opcional, selecionando existente), **status**, **isento** (§8.8.2) e **exibir como pago no grupo** (§8.8.1). **Sem trava:** a lista e os dados podem ser editados a qualquer momento — correções são sempre livres (§8.6).
 2. **Buscar/filtrar/ordenar participantes** — por nome/apelido, status, valor, pontuação. (Rico na Fase 2; simples na Fase 1.)
 3. **Perfil do participante** — visão individual consolidada (ver 12.4).
 4. **Controle de pagamentos** — status, valor e **totais** (esperado/recebido/falta).
@@ -308,11 +321,21 @@ Diego, Lucas, Ana, João, Pedro, ...
 **13.7 Pagamentos**
 ```
 💰 *PAGAMENTOS*
-✅ Pagos: Diego (R$35), Lucas (R$40), ...
-⏳ Pendentes: Ana (R$40), João (R$30), ...
 
-Esperado: R$ 2.300 | Recebido: R$ 1.450 | Falta: R$ 850
+✅ *Pagos*
+• Diego — R$ 35
+• Lucas — R$ 40
+
+⏳ *Pendentes*
+• Ana — R$ 40
+• João — R$ 30
+
+🏆 *Prêmio*: R$ 1.200 / R$ 1.800
 ```
+> **Intencional (alinhado ao código):** o texto do grupo **omite** os três totais
+> (esperado/recebido/falta) e mostra a **premiação** na última linha — *atual / potencial*
+> (§8.9). Pote bruto, totais e os 25% do organizador são **privados** (só no painel/resumo
+> geral), nunca vão para o grupo. Seção vazia (ex.: ninguém pago) é omitida por completo.
 
 **13.8 Pendências de palpite**
 ```
@@ -327,7 +350,7 @@ Separar o que é **armazenado** do que é **derivado** (calculado na hora): deri
 
 **Seleção (catálogo)** — *armazenado:* nome; bandeira (emoji).
 
-**Participante** — *armazenado:* identidade própria (gerada pelo sistema); nome; apelido (opcional); indicador (opcional — referência a **outro Participante**, relação **auto-referente**); status de pagamento (Pago/Pendente).
+**Participante** — *armazenado:* identidade própria (gerada pelo sistema); nome; apelido (opcional); indicador (opcional — referência a **outro Participante**, relação **auto-referente**); status de pagamento (Pago/Pendente); **isento** de pagamento (booleano, padrão não — §8.8.2); **exibir como pago no grupo** (booleano, padrão não — §8.8.1).
 
 **Rodada** — *armazenado:* fase; ordem; estado (montada/palpites abertos/resultados em andamento/encerrada); contém vários **Jogos**.
 
@@ -383,7 +406,7 @@ Separar o que é **armazenado** do que é **derivado** (calculado na hora): deri
 | 14 | Montagem da rodada | Manual, do catálogo. | 1 |
 | 15 | Posicionamento dos times | Posicional (esquerda × direita). | 1 |
 | 16 | Entrada de palpites | Por participante. | 1 |
-| 17 | Lista de participantes | Travada quando o bolão começa. | 1 |
+| 17 | Lista de participantes | Editável a qualquer momento — sem trava; correções livres (§8.6). | 1 |
 | 18 | Ciclo de vida da rodada | montada → palpites → resultados → encerrada. | 1 |
 | 19 | 3º lugar + final | Uma rodada com 2 jogos. | 1 |
 | 20 | Perfil do participante | Visão individual consolidada. | 1 |
