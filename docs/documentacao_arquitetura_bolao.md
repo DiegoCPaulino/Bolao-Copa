@@ -1,7 +1,7 @@
 # Documento de Arquitetura e Stack — Sistema de Gestão de Bolão (Copa do Mundo 2026)
 
-**Versão:** 1 — documento técnico (companheiro do documento de contexto funcional v7)
-**Atualizado em:** 16/06/2026
+**Versão:** 2 — documento técnico (companheiro do documento de contexto funcional v8 e do documento de roteiro de desenvolvimento v2)
+**Atualizado em:** 26/06/2026
 **Natureza:** documento técnico/arquitetura. Define *como* o sistema descrito no documento de contexto funcional será construído — stack, arquitetura de aplicação, modelagem física de dados, contrato de API, estratégia de testes, deploy e segurança. As regras de negócio, o escopo e o comportamento permanecem no documento funcional, que continua sendo a **fonte de verdade do domínio**.
 
 ---
@@ -11,12 +11,13 @@
 | Versão | O que mudou |
 |--------|-------------|
 | **1** | Documento criado. Leitura técnica do problema; escolha e justificativa da stack (TypeScript + Node 24 LTS + Fastify + Prisma + PostgreSQL no back; React + Vite + Tailwind no front; Vitest, Biome, Zod); arquitetura em camadas com núcleo de domínio puro; princípio "derivado não se armazena"; proposta de modelagem física; proposta de contrato de API; estratégia de testes, deploy (PaaS → VPS) e segurança; lista explícita de anti-decisões (o que NÃO usar). |
+| **2** | Atualização **factual** (sem reescrever o raciocínio das seções). Cabeçalho e §1 passam a referenciar o funcional **v8** e o roteiro **v2**. Estrutura de pastas (§5.5) atualizada para a **real** (`cli/`, `shared/`, `schemas/` neutro, `http/` separado — antes os schemas viviam em `http/`). Modelo físico (§6) ganha os campos `isento` e `exibirComoPago` do Participante. Registrado que a **ordem de construção** segue o roteiro v2 (HTTP/auth/front são da **Entrega 2**; na Entrega 1 o adaptador é o terminal) e que a **decisão final de banco é Postgres mesmo local** (Entrega 1, via Docker) — SQLite só como alternativa não adotada. As decisões de **stack** das seções §3–§13 continuam valendo para as duas entregas. |
 
 ---
 
 ## 1. Propósito e relação com o documento funcional
 
-O documento de contexto funcional (v7) responde **o que** o sistema é e faz. Este documento responde **como** ele será construído. A separação é deliberada: o *o quê* deve permanecer estável mesmo que a tecnologia mude, e o *como* deve poder evoluir sem reescrever o domínio.
+O documento de contexto funcional (v8) responde **o que** o sistema é e faz. Este documento responde **como** ele será construído. A separação é deliberada: o *o quê* deve permanecer estável mesmo que a tecnologia mude, e o *como* deve poder evoluir sem reescrever o domínio. A **ordem** de construção (o *em que sequência*) vive no **roteiro de desenvolvimento v2**, que divide a entrega em duas — **Entrega 1** (terminal/local, sem HTTP/auth/front/deploy) e **Entrega 2** (HTTP, autenticação, front-end, deploy). As escolhas de **stack** deste documento valem para as duas entregas; mas, onde as seções abaixo presumem HTTP/front "desde cedo" (§4.8/§4.9/§5.1/§7), **prevalece a ordem do roteiro v2** — na Entrega 1 o adaptador é o terminal (CLI), e HTTP/auth/front entram na Entrega 2.
 
 Regra de precedência: em caso de conflito, **as regras de negócio do documento funcional prevalecem**. Este documento nunca redefine comportamento — apenas escolhe as ferramentas e a estrutura que o implementam.
 
@@ -85,6 +86,8 @@ Os dados são intrinsecamente relacionais e com integridade que importa: `Jogo` 
 
 **Registro honesto da alternativa:** dado o tamanho (single-user, ~2 mil registros), **SQLite seria tecnicamente defensável** — sem servidor, arquivo único, zero concorrência. O que pesa contra é o requisito de *armazenamento central + multi-dispositivo + deploy online*: SQLite exige disco persistente, o que atrita com deploys efêmeros. **A escolha por Postgres é por padrão de indústria e conveniência de deploy, não por necessidade de escala** — distinção que fica documentada de propósito.
 
+> **Decisão final (roteiro v2, Fase 3):** usa-se **Postgres mesmo localmente** na Entrega 1 (via Docker), para o **mesmo motor** servir local (E1) e gerenciado (E2) e poupar uma migração de banco arriscada na virada online. SQLite fica registrado apenas como alternativa teórica — **não adotada**.
+
 ### 4.6 Acesso a dados: Prisma
 Prisma dá o melhor DX para aprender modelagem: schema declarativo num único arquivo legível (a relação auto-referente da indicação fica limpa de expressar), tipos TypeScript gerados automaticamente e migrations de qualidade.
 
@@ -143,29 +146,32 @@ Um módulo dedicado converte estruturas de domínio nos artefatos da seção 12 
 ### 5.4 Princípio: derivado não se armazena
 Pontuação, valor a pagar, totais, classificação, placares exatos e "quem não palpitou" **não são persistidos** — são calculados sob demanda a partir de palpites + resultados + indicações. Com ~2 mil registros, recalcular tudo a cada requisição é instantâneo e elimina a classe inteira de bugs de "derivado desatualizado". Saber *quando não cachear* é uma decisão de engenharia tão importante quanto saber cachear.
 
-### 5.5 Estrutura de pastas proposta
-Proposta inicial, a refinar na implementação:
+### 5.5 Estrutura de pastas
+Estrutura **real** do repositório (já implementada; o `CLAUDE.md` §6 traz a árvore completa anotada). Os adaptadores `cli/` (Entrega 1) e `http/` (Entrega 2) são intercambiáveis sobre os mesmos `services/`; os `schemas/` Zod são fonte única dos dois.
 
 ```
 backend/
   src/
-    domain/            # regras puras + constantes (sem framework/banco)
-      pontuacao.ts
-      classificacao.ts
-      pagamento.ts
-      whatsapp/        # formatadores dos artefatos
-    services/          # casos de uso / orquestração
-    repositories/      # acesso a dados (Prisma)
-    http/              # rotas, controllers, schemas Zod
-    config/            # env validado, conexão, auth
-    app.ts
+    domain/            # regras PURAS + constantes (sem framework/banco/interface)
+      pontuacao.ts     #   (+ classificacao, pagamento, premiacao, estatisticas, palpites, constantes, erros)
+      whatsapp/        # formatadores dos artefatos (puros, devolvem string)
+    repositories/      # acesso a dados (Prisma) — única camada que fala com o banco
+    services/          # casos de uso / orquestração — AGNÓSTICOS de interface
+    schemas/           # schemas Zod NEUTROS — fonte única CLI + HTTP
+    shared/            # utilitários compartilhados entre adaptadores
+    config/            # env validado (Zod) + conexão Prisma
+    cli/               # adaptador de TERMINAL (Entrega 1): main + menus/ + rotulos
+    http/              # adaptador HTTP (Entrega 2): app/server/auth + routes/
   prisma/
     schema.prisma
-  tests/               # espelha domain/ e services/
+    migrations/
+    seed.ts            # catálogo de seleções
+  scripts/             # utilitários (gerar-hash, preparar banco de teste, backup)
+  tests/               # espelha domain/, services/, cli/, http/ (+ integration/)
 frontend/
   src/
-    pages/             # telas (login, painel, participantes, perfil, ...)
-    components/
+    pages/             # telas (login, painel, participantes, pagamentos, ...)
+    components/        # inclui o "Copiar para WhatsApp" compartilhado
     api/               # cliente HTTP (contrato com o back)
     lib/
 ```
@@ -191,7 +197,9 @@ model Participante {
   id           String           @id @default(cuid())
   nome         String
   apelido      String?          // diferencia homônimos
-  status       StatusPagamento  @default(PENDENTE)
+  status         StatusPagamento  @default(PENDENTE)
+  isento         Boolean          @default(false) // fora da cobrança; disputa normal (funcional §8.8.2)
+  exibirComoPago Boolean          @default(false) // override de apresentação só na exportação (funcional §8.8.1)
   indicadorId  String?          // auto-referência: quem indicou este participante
   indicador    Participante?    @relation("Indicacao", fields: [indicadorId], references: [id])
   indicados    Participante[]   @relation("Indicacao")
