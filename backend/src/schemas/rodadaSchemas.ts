@@ -21,15 +21,26 @@ export const estadoRodadaSchema = z.enum([
   "ENCERRADA",
 ]);
 
-/** Um jogo a montar: o par de seleções (ids). Posicional — sem mando de campo. */
-const jogoSchema = z.object({
+/**
+ * Um jogo: o par de seleções (ids). Posicional — sem mando de campo. EXPORTADO para ser
+ * reusado pela montagem incremental (CLI agora; tela 8.3 e HTTP depois): é o corpo de
+ * `adicionarJogo`/`editarJogo`, com os ids da rodada/jogo vindo da URL no HTTP.
+ */
+export const jogoInputSchema = z.object({
   selecaoEsquerdaId: z.string().min(1, "Selecione o time da esquerda."),
   selecaoDireitaId: z.string().min(1, "Selecione o time da direita."),
 });
 
+export type JogoInput = z.infer<typeof jogoInputSchema>;
+
+/** Criação de rodada VAZIA (montagem incremental): só a fase; os jogos entram depois. */
+export const criarRodadaInputSchema = z.object({
+  fase: faseRodadaSchema,
+});
+
 export const montarRodadaInputSchema = z.object({
   fase: faseRodadaSchema,
-  jogos: z.array(jogoSchema).min(1, "A rodada precisa de pelo menos um jogo."),
+  jogos: z.array(jogoInputSchema).min(1, "A rodada precisa de pelo menos um jogo."),
 });
 
 export type MontarRodadaInput = z.infer<typeof montarRodadaInputSchema>;

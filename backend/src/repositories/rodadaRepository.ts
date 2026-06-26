@@ -51,6 +51,12 @@ export function criarComJogos(
   });
 }
 
+/** Cria uma rodada VAZIA (sem jogos) — estado inicial MONTADA (default do schema). É o
+ *  ponto de partida da montagem INCREMENTAL: os jogos entram depois, um a um. */
+export function criarRodadaVazia(fase: FaseRodada, ordem: number): Promise<RodadaDetalhada> {
+  return prisma.rodada.create({ data: { fase, ordem }, include: { jogos: JOGOS_DETALHADOS } });
+}
+
 export function listar(): Promise<RodadaResumo[]> {
   return prisma.rodada.findMany({
     orderBy: { ordem: "asc" },
@@ -89,6 +95,45 @@ export type JogoComPalpites = Prisma.JogoGetPayload<{
 
 export function buscarJogoPorId(id: string): Promise<Jogo | null> {
   return prisma.jogo.findUnique({ where: { id } });
+}
+
+/**
+ * Próxima `ordem` de jogo DENTRO de uma rodada: MAX(ordem) + 1 entre os jogos da rodada
+ * (1 se não houver). Mesmo critério da `proximaOrdem` da rodada — monotônico, nunca
+ * reusa número: a `ordem` é um FATO do jogo (pode ter circulado no grupo), não rótulo.
+ */
+export async function proximaOrdemJogo(rodadaId: string): Promise<number> {
+  const { _max } = await prisma.jogo.aggregate({ where: { rodadaId }, _max: { ordem: true } });
+  return (_max.ordem ?? 0) + 1;
+}
+
+/** Cria UM jogo na rodada (montagem incremental). Gols reais nascem nulos. */
+export function criarJogo(
+  rodadaId: string,
+  ordem: number,
+  selecaoEsquerdaId: string,
+  selecaoDireitaId: string,
+): Promise<Jogo> {
+  return prisma.jogo.create({ data: { rodadaId, ordem, selecaoEsquerdaId, selecaoDireitaId } });
+}
+
+/** Troca SÓ as duas seleções de um jogo (não mexe em ordem, placar real nem palpites). */
+export function atualizarJogoSelecoes(
+  id: string,
+  selecaoEsquerdaId: string,
+  selecaoDireitaId: string,
+): Promise<Jogo> {
+  return prisma.jogo.update({ where: { id }, data: { selecaoEsquerdaId, selecaoDireitaId } });
+}
+
+/** Remove um jogo. O serviço garante ANTES que não há palpites (FK Palpite→Jogo é Restrict). */
+export function removerJogo(id: string): Promise<Jogo> {
+  return prisma.jogo.delete({ where: { id } });
+}
+
+/** Quantos palpites o jogo já tem — insumo da guarda de remoção (não apagar dado real). */
+export function contarPalpitesDoJogo(jogoId: string): Promise<number> {
+  return prisma.palpite.count({ where: { jogoId } });
 }
 
 /**

@@ -1,10 +1,17 @@
-import { number, select } from "@inquirer/prompts";
+import { confirm, select } from "@inquirer/prompts";
 import type { EstadoRodada, FaseRodada } from "@prisma/client";
 import { formatarMensagemRodada } from "../../domain/whatsapp/mensagemRodada.js";
-import { estadoRodadaSchema, montarRodadaInputSchema } from "../../schemas/rodadaSchemas.js";
+import {
+  criarRodadaInputSchema,
+  estadoRodadaSchema,
+  jogoInputSchema,
+} from "../../schemas/rodadaSchemas.js";
 import * as rodadas from "../../services/rodadaService.js";
 import * as selecoes from "../../services/selecaoService.js";
 import { ESTADO_LABEL, FASE_LABEL } from "../rotulos.js";
+
+/** Um jogo já detalhado (com as duas seleções), como vem na rodada detalhada. */
+type JogoDetalhado = rodadas.RodadaDetalhada["jogos"][number];
 
 /**
  * Submenu de Rodadas e Jogos — ADAPTADOR (CLAUDE.md §5): pergunta, chama o serviço e
@@ -18,7 +25,8 @@ export async function menuRodadas(): Promise<void> {
     const acao = await select({
       message: "Rodadas e jogos",
       choices: [
-        { name: "Montar rodada", value: "montar" },
+        { name: "Montar rodada (nova)", value: "montar" },
+        { name: "Adicionar/editar jogos de uma rodada", value: "jogos" },
         { name: "Listar rodadas", value: "listar" },
         { name: "Detalhar rodada", value: "detalhar" },
         { name: "Definir estado (apenas um guia)", value: "estado" },
@@ -29,7 +37,10 @@ export async function menuRodadas(): Promise<void> {
 
     switch (acao) {
       case "montar":
-        await montar();
+        await montarNova();
+        break;
+      case "jogos":
+        await gerenciarJogosDeRodadaExistente();
         break;
       case "listar":
         await listar();
@@ -50,42 +61,137 @@ export async function menuRodadas(): Promise<void> {
   }
 }
 
-async function montar(): Promise<void> {
+async function montarNova(): Promise<void> {
+  const fase = await select<FaseRodada>({ message: "Fase da rodada", choices: fasesChoices() });
+  const dados = criarRodadaInputSchema.parse({ fase });
+  // A ordem da rodada é derivada pelo SERVIÇO — o adaptador só passa a fase.
+  const rodada = await rodadas.criarRodada(dados.fase);
+  console.log(
+    `\n✅ Rodada criada: ${FASE_LABEL[rodada.fase]} (rodada ${rodada.ordem}). Adicione os jogos — pode parar e voltar depois.\n`,
+  );
+  await gerenciarJogos(rodada.id);
+}
+
+async function gerenciarJogosDeRodadaExistente(): Promise<void> {
+  const id = await escolherRodada("Adicionar/editar jogos de qual rodada?");
+  if (!id) {
+    return;
+  }
+  await gerenciarJogos(id);
+}
+
+/**
+ * Laço da montagem INCREMENTAL: mostra os jogos já adicionados (J1, J2…) e deixa
+ * Adicionar/Editar/Remover/Voltar. É o "parar e continuar depois" — entra-se aqui ao
+ * criar uma rodada nova e ao escolher uma já existente. Nenhuma ação é bloqueada pelo
+ * estado da rodada (§3.7) — o serviço cuida da sanidade.
+ */
+async function gerenciarJogos(rodadaId: string): Promise<void> {
+  let voltar = false;
+  while (!voltar) {
+    const r = await rodadas.detalharRodada(rodadaId);
+    console.log(
+      `\n${FASE_LABEL[r.fase]} (rodada ${r.ordem}) — ${ESTADO_LABEL[r.estado]} — ${r.jogos.length} jogo(s):`,
+    );
+    if (r.jogos.length === 0) {
+      console.log("  (nenhum jogo ainda)");
+    }
+    for (const j of r.jogos) {
+      console.log(
+        `  ${j.ordem}. ${j.selecaoEsquerda.bandeira} ${j.selecaoEsquerda.nome} x ${j.selecaoDireita.nome} ${j.selecaoDireita.bandeira}`,
+      );
+    }
+    console.log("");
+
+    const acao = await select({
+      message: "Jogos da rodada",
+      choices: [
+        { name: "Adicionar jogo", value: "adicionar" },
+        { name: "Editar jogo", value: "editar" },
+        { name: "Remover jogo", value: "remover" },
+        { name: "Voltar", value: "voltar" },
+      ],
+    });
+
+    switch (acao) {
+      case "adicionar":
+        await adicionarJogoFluxo(rodadaId);
+        break;
+      case "editar":
+        await editarJogoFluxo(r.jogos);
+        break;
+      case "remover":
+        await removerJogoFluxo(r.jogos);
+        break;
+      case "voltar":
+        voltar = true;
+        break;
+    }
+  }
+}
+
+async function adicionarJogoFluxo(rodadaId: string): Promise<void> {
+  const par = await escolherParDeSelecoes();
+  if (!par) {
+    return;
+  }
+  const dados = jogoInputSchema.parse(par);
+  const r = await rodadas.adicionarJogo(rodadaId, dados.selecaoEsquerdaId, dados.selecaoDireitaId);
+  console.log(`\n✅ Jogo ${r.jogos.at(-1)?.ordem} adicionado (${r.jogos.length} no total).\n`);
+}
+
+async function editarJogoFluxo(jogos: ReadonlyArray<JogoDetalhado>): Promise<void> {
+  if (jogos.length === 0) {
+    console.log("\n(nenhum jogo para editar)\n");
+    return;
+  }
+  const jogoId = await select({ message: "Editar qual jogo?", choices: jogos.map(opcaoJogo) });
+  const par = await escolherParDeSelecoes();
+  if (!par) {
+    return;
+  }
+  const dados = jogoInputSchema.parse(par);
+  await rodadas.editarJogo(jogoId, dados.selecaoEsquerdaId, dados.selecaoDireitaId);
+  console.log("\n✅ Jogo atualizado.\n");
+}
+
+async function removerJogoFluxo(jogos: ReadonlyArray<JogoDetalhado>): Promise<void> {
+  if (jogos.length === 0) {
+    console.log("\n(nenhum jogo para remover)\n");
+    return;
+  }
+  const jogoId = await select({ message: "Remover qual jogo?", choices: jogos.map(opcaoJogo) });
+  const jogo = jogos.find((j) => j.id === jogoId);
+  const ok = await confirm({
+    message: `Remover o jogo ${jogo?.ordem} (${jogo?.selecaoEsquerda.nome} x ${jogo?.selecaoDireita.nome})?`,
+    default: false,
+  });
+  if (!ok) {
+    console.log("\nRemoção cancelada.\n");
+    return;
+  }
+  // O serviço RECUSA se o jogo já tiver palpites (JogoComPalpites, traduzido no menuPrincipal).
+  await rodadas.removerJogo(jogoId);
+  console.log("\n🗑️  Jogo removido.\n");
+}
+
+/** Escolhe o par de seleções (esquerda, depois direita ≠ esquerda). null se sem catálogo. */
+async function escolherParDeSelecoes(): Promise<rodadas.JogoParaMontar | null> {
   const catalogo = await selecoes.listarSelecoes();
   if (catalogo.length < 2) {
     console.log("\n(catálogo insuficiente — rode `npm run db:seed` para popular as seleções)\n");
-    return;
+    return null;
   }
-
-  const fase = await select<FaseRodada>({ message: "Fase da rodada", choices: fasesChoices() });
-  const quantos = await number({
-    message: "Quantos jogos nesta rodada?",
-    default: jogosSugeridos(fase), // sugestão por fase; a rodada final usa 2 sem código especial
-    min: 1,
-    required: true,
+  // Posições são só para o placar (2×1 ≠ 1×2) — não é mando de campo (decisão #15).
+  const selecaoEsquerdaId = await select({
+    message: "Time da esquerda",
+    choices: catalogo.map(opcaoSelecao),
   });
-  const total = quantos ?? 1;
-
-  const jogos: rodadas.JogoParaMontar[] = [];
-  for (let i = 1; i <= total; i++) {
-    // Posições são só para o placar (2×1 ≠ 1×2) — não é mando de campo (decisão #15).
-    const selecaoEsquerdaId = await select({
-      message: `Jogo ${i} — time da esquerda`,
-      choices: catalogo.map(opcaoSelecao),
-    });
-    const selecaoDireitaId = await select({
-      message: `Jogo ${i} — time da direita`,
-      choices: catalogo.filter((s) => s.id !== selecaoEsquerdaId).map(opcaoSelecao),
-    });
-    jogos.push({ selecaoEsquerdaId, selecaoDireitaId });
-  }
-
-  const dados = montarRodadaInputSchema.parse({ fase, jogos });
-  // A ordem da rodada é derivada pelo SERVIÇO — o adaptador só passa fase + jogos.
-  const criada = await rodadas.montarRodada(dados.fase, dados.jogos);
-  console.log(
-    `\n✅ Rodada montada: ${FASE_LABEL[criada.fase]} — ${criada.jogos.length} jogo(s).\n`,
-  );
+  const selecaoDireitaId = await select({
+    message: "Time da direita",
+    choices: catalogo.filter((s) => s.id !== selecaoEsquerdaId).map(opcaoSelecao),
+  });
+  return { selecaoEsquerdaId, selecaoDireitaId };
 }
 
 async function listar(): Promise<void> {
@@ -159,6 +265,10 @@ function opcaoSelecao(s: { id: string; nome: string; bandeira: string }) {
   return { name: `${s.bandeira} ${s.nome}`, value: s.id };
 }
 
+function opcaoJogo(j: JogoDetalhado) {
+  return { name: `${j.ordem}. ${j.selecaoEsquerda.nome} x ${j.selecaoDireita.nome}`, value: j.id };
+}
+
 function fasesChoices() {
   return (Object.keys(FASE_LABEL) as FaseRodada[]).map((f) => ({ name: FASE_LABEL[f], value: f }));
 }
@@ -168,21 +278,6 @@ function estadosChoices() {
     name: ESTADO_LABEL[e],
     value: e,
   }));
-}
-
-function jogosSugeridos(fase: FaseRodada): number {
-  switch (fase) {
-    case "DEZESSEIS_AVOS":
-      return 16;
-    case "OITAVAS":
-      return 8;
-    case "QUARTAS":
-      return 4;
-    case "SEMIFINAIS":
-      return 2;
-    case "FINAL":
-      return 2; // 3º lugar + final
-  }
 }
 
 async function escolherRodada(message: string): Promise<string | null> {

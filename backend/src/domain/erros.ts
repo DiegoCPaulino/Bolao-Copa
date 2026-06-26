@@ -104,6 +104,16 @@ export class JogoNaoEncontrado extends ErroDeDominio {
   }
 }
 
+/** Tentou remover um jogo que já tem palpites — palpite é dado real (não se apaga em
+ *  cascata). O operador deve remover/zerar os palpites antes de excluir o jogo. */
+export class JogoComPalpites extends ErroDeDominio {
+  readonly codigo = "JOGO_COM_PALPITES";
+
+  constructor(public readonly id: string) {
+    super(`O jogo ${id} já tem palpites; remova ou zere os palpites antes de excluí-lo.`);
+  }
+}
+
 /** Placar de resultado real inválido (gols devem ser inteiros >= 0). */
 export class ResultadoInvalido extends ErroDeDominio {
   readonly codigo = "RESULTADO_INVALIDO";
