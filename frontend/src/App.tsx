@@ -5,6 +5,7 @@ import { RotaProtegida } from "@/components/RotaProtegida";
 import { Toaster } from "@/components/ui/sonner";
 import { EmConstrucao } from "@/pages/EmConstrucao";
 import { Login } from "@/pages/Login";
+import { Pagamentos } from "@/pages/Pagamentos";
 import { Painel } from "@/pages/Painel";
 import { Participantes } from "@/pages/Participantes";
 
@@ -23,7 +24,7 @@ export function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<Painel />} />
               <Route path="/participantes" element={<Participantes />} />
-              <Route path="/pagamentos" element={<EmConstrucao titulo="Pagamentos" />} />
+              <Route path="/pagamentos" element={<Pagamentos />} />
               <Route path="/rodadas" element={<EmConstrucao titulo="Rodadas e jogos" />} />
             </Route>
           </Route>

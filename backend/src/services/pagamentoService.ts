@@ -27,16 +27,15 @@ export type PagamentoParticipante = {
   // Na visão REAL este é o status gravado (a verdade); na visão PÚBLICA, o status já
   // resolvido por `statusPublico`. Mesmo tipo, duas visões — quem decide é o chamador.
   status: StatusPagamento;
+  // Sinalizador CRU (como `isento`): permite a tela INTERNA mostrar a verdade (status real)
+  // e ainda AVISAR quem aparece como pago só na exportação. NÃO é a visão pública (§8.8).
+  exibirComoPago: boolean;
 };
 
 export type ResumoPagamentos = {
   participantes: PagamentoParticipante[];
   totais: TotaisPagamento;
 };
-
-/** Linha-base de cobrança: além do que a UI mostra, carrega o `exibirComoPago` para
- *  que as duas visões (real e pública) sejam construídas a partir da MESMA derivação. */
-type LinhaCobranca = PagamentoParticipante & { exibirComoPago: boolean };
 
 /**
  * Derivação ÚNICA e cara do quadro de cobrança (privada) — funcional §8.7/§8.8.
@@ -61,7 +60,7 @@ type LinhaCobranca = PagamentoParticipante & { exibirComoPago: boolean };
  * Os totais (esperado/recebido/falta) NÃO saem daqui: cada visão (real/pública)
  * escolhe o status a somar e chama a MESMA `calcularTotaisPagamento` (sem 2ª soma).
  */
-async function derivarCobranca(): Promise<LinhaCobranca[]> {
+async function derivarCobranca(): Promise<PagamentoParticipante[]> {
   const todos = await repo.listarTodos();
   const indicadosPorId = contarIndicadosDiretos(todos);
 
@@ -82,13 +81,9 @@ async function derivarCobranca(): Promise<LinhaCobranca[]> {
  * tabela do front. O `status` é o gravado; os totais somam só quem está PAGO de fato.
  */
 export async function listarPagamentos(): Promise<ResumoPagamentos> {
-  const participantes: PagamentoParticipante[] = (await derivarCobranca()).map((l) => ({
-    id: l.id,
-    nome: l.nome,
-    apelido: l.apelido,
-    valorAPagar: l.valorAPagar,
-    status: l.status, // status REAL (a verdade)
-  }));
+  // A derivação base JÁ é a visão real: status gravado (verdade) + `exibirComoPago` cru
+  // (que a tela interna usa para AVISAR, sem nunca mostrar "pago" puro para o maquiado).
+  const participantes = await derivarCobranca();
   return { participantes, totais: calcularTotaisPagamento(participantes) };
 }
 
@@ -105,10 +100,7 @@ export async function listarPagamentos(): Promise<ResumoPagamentos> {
  */
 export async function listarPagamentosPublico(): Promise<ResumoPagamentos> {
   const participantes: PagamentoParticipante[] = (await derivarCobranca()).map((l) => ({
-    id: l.id,
-    nome: l.nome,
-    apelido: l.apelido,
-    valorAPagar: l.valorAPagar,
+    ...l,
     status: statusPublico(l), // status PÚBLICO: pendente "exibido como pago" vira PAGO
   }));
   return { participantes, totais: calcularTotaisPagamento(participantes) };

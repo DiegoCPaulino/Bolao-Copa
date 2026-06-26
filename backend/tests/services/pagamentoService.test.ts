@@ -144,6 +144,10 @@ describe.skipIf(!temBanco)("pagamentoService (integração com Postgres)", () =>
       const real = await service.listarPagamentos();
       expect(real.totais).toEqual({ esperado: 120, recebido: 40, falta: 80 });
       expect(real.participantes.find((p) => p.id === bruno.id)?.status).toBe("PENDENTE");
+      // O sinalizador cru viaja na visão real (a tela mostra a verdade + avisa): Bruno
+      // está marcado, Ana não. NÃO é a visão pública — `status` segue sendo o real.
+      expect(real.participantes.find((p) => p.id === bruno.id)?.exibirComoPago).toBe(true);
+      expect(real.participantes.find((p) => p.nome === "Ana")?.exibirComoPago).toBe(false);
 
       // Visão PÚBLICA (exportação): Bruno entra como PAGO nas seções E nos totais —
       // assim o prêmio (de `recebido`) fica consistente e a soma não denuncia.
