@@ -7,6 +7,7 @@ import { ApiError } from "@/api/client";
 import * as participantesApi from "@/api/participantes";
 import type { Participante } from "@/api/participantes";
 import { CopiarWhatsApp } from "@/components/CopiarWhatsApp";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -114,9 +115,9 @@ export function Participantes() {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Participantes</h1>
+        <h1 className="text-2xl font-bold uppercase tracking-wide">Participantes</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => void exportar()}>
+          <Button variant="gold" onClick={() => void exportar()}>
             Exportar
           </Button>
           <Button
@@ -170,56 +171,66 @@ export function Participantes() {
       )}
 
       {!carregando && !erroCarga && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Apelido</TableHead>
-              <TableHead>Indicado por</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Isento</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visiveis.length === 0 ? (
-              <TableRow>
-                <TableCell className="text-muted-foreground" colSpan={6}>
-                  Nenhum participante encontrado.
-                </TableCell>
+        <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead>Nome</TableHead>
+                <TableHead>Apelido</TableHead>
+                <TableHead>Indicado por</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Isento</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
-            ) : (
-              visiveis.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.nome}</TableCell>
-                  <TableCell className="text-muted-foreground">{p.apelido ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {p.indicador ? rotulo(p.indicador) : "—"}
-                  </TableCell>
-                  <TableCell>{p.status === "PAGO" ? "Pago" : "Pendente"}</TableCell>
-                  <TableCell>{p.isento ? "Sim" : "—"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditando(p);
-                          setFormAberto(true);
-                        }}
-                      >
-                        Editar
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setRemovendo(p)}>
-                        Remover
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {visiveis.length === 0 ? (
+                <TableRow>
+                  <TableCell className="text-muted-foreground" colSpan={6}>
+                    Nenhum participante encontrado.
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                visiveis.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.nome}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.apelido ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {p.indicador ? rotulo(p.indicador) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={p.status} />
+                    </TableCell>
+                    <TableCell>
+                      {p.isento ? (
+                        <StatusBadge status="ISENTO" />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditando(p);
+                            setFormAberto(true);
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setRemovendo(p)}>
+                          Remover
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Cadastrar / Editar */}

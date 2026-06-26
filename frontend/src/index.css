@@ -25,6 +25,25 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Identidade Copa — acentos e status semânticos (fonte única; as cores moram no :root) */
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-scoreboard: var(--scoreboard);
+  --color-scoreboard-foreground: var(--scoreboard-foreground);
+}
+
+/* Tipografia: Inter no corpo (padrão) + Oswald de display, aplicada SÓ em h1/h2 (ver
+   @layer base). Valores literais → @theme normal, não @theme inline. */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Oswald", "Inter", ui-sans-serif, sans-serif;
 }
 
 :root {
@@ -35,8 +54,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.52 0.13 162);
+  --primary-foreground: oklch(0.985 0.01 160);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -46,7 +65,20 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.52 0.13 162);
+
+  /* Acentos da identidade Copa (gramado + dourado) e status semânticos. Os badges usam o
+     par <tom>-soft (fundo) + <tom> (texto), com gap de luminosidade p/ contraste legível. */
+  --gold: oklch(0.8 0.15 78);
+  --gold-foreground: oklch(0.27 0.05 70);
+  --success: oklch(0.52 0.13 162);
+  --success-soft: oklch(0.95 0.04 162);
+  --warning: oklch(0.55 0.12 70);
+  --warning-soft: oklch(0.96 0.05 80);
+  --info: oklch(0.52 0.1 245);
+  --info-soft: oklch(0.96 0.03 240);
+  --scoreboard: oklch(0.3 0.07 160);
+  --scoreboard-foreground: oklch(0.97 0.02 160);
 }
 
 .dark {
@@ -77,5 +109,11 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+  }
+  /* Fonte de display restrita a h1/h2 — não vaza p/ corpo, tabela, labels ou badges. */
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
   }
 }
