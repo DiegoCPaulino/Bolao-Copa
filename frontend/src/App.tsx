@@ -3,11 +3,11 @@ import { AuthProvider } from "@/auth/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { RotaProtegida } from "@/components/RotaProtegida";
 import { Toaster } from "@/components/ui/sonner";
-import { EmConstrucao } from "@/pages/EmConstrucao";
 import { Login } from "@/pages/Login";
 import { Pagamentos } from "@/pages/Pagamentos";
 import { Painel } from "@/pages/Painel";
 import { Participantes } from "@/pages/Participantes";
+import { Rodadas } from "@/pages/Rodadas";
 
 /**
  * Base do front (Fatia 7.2): /login pública + rotas do app sob o wrapper protegido
@@ -25,7 +25,7 @@ export function App() {
               <Route path="/" element={<Painel />} />
               <Route path="/participantes" element={<Participantes />} />
               <Route path="/pagamentos" element={<Pagamentos />} />
-              <Route path="/rodadas" element={<EmConstrucao titulo="Rodadas e jogos" />} />
+              <Route path="/rodadas" element={<Rodadas />} />
             </Route>
           </Route>
         </Routes>
