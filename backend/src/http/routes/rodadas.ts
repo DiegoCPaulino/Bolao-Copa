@@ -4,7 +4,11 @@ import { formatarMensagemRodada } from "../../domain/whatsapp/mensagemRodada.js"
 import { formatarResumoJogo } from "../../domain/whatsapp/resumoJogo.js";
 import { formatarResumoRodada } from "../../domain/whatsapp/resumoRodada.js";
 import { resultadoBodySchema } from "../../schemas/resultadoSchemas.js";
-import { definirEstadoInputSchema, montarRodadaInputSchema } from "../../schemas/rodadaSchemas.js";
+import {
+  definirEstadoInputSchema,
+  jogoInputSchema,
+  rodadaPostBodySchema,
+} from "../../schemas/rodadaSchemas.js";
 import * as resultados from "../../services/resultadoService.js";
 import * as rodadas from "../../services/rodadaService.js";
 import { FASE_LABEL } from "../../shared/rotulos.js";
@@ -20,10 +24,15 @@ const TEXTO_PLANO = "text/plain; charset=utf-8";
 export async function rotasRodadas(app: FastifyInstance): Promise<void> {
   app.get("/rodadas", async () => rodadas.listarRodadas());
 
+  // POST /rodadas BIFURCA pelo corpo (ver rodadaPostBodySchema): `jogos` ausente cria a
+  // rodada VAZIA (montagem incremental); `jogos: [≥1]` monta de forma ATÔMICA (fase +
+  // jogos, como na Fase 6); `jogos: []` é 400 (o Zod rejeita). A ordem é derivada pelo
+  // SERVIÇO — o adaptador só repassa. É dispatch por shape de entrada, não regra.
   app.post("/rodadas", async (req, reply) => {
-    const dados = montarRodadaInputSchema.parse(req.body);
-    // A ordem da rodada é derivada pelo SERVIÇO — o adaptador só passa fase + jogos.
-    const criada = await rodadas.montarRodada(dados.fase, dados.jogos);
+    const dados = rodadaPostBodySchema.parse(req.body);
+    const criada = dados.jogos
+      ? await rodadas.montarRodada(dados.fase, dados.jogos)
+      : await rodadas.criarRodada(dados.fase);
     reply.code(201);
     return criada;
   });
@@ -37,6 +46,33 @@ export async function rotasRodadas(app: FastifyInstance): Promise<void> {
     const { id } = idParam.parse(req.params);
     const { estado } = definirEstadoInputSchema.parse(req.body);
     return rodadas.definirEstado(id, estado); // estado é GUIA, não trava (§3.7)
+  });
+
+  // — Jogos: montagem INCREMENTAL (granular). Cada rota é fina (Zod + serviço) e
+  // devolve a RODADA DETALHADA: adicionar/editar/remover são tratados de forma
+  // UNIFORME pelo cliente (sempre recebe a lista J1/J2… atualizada de uma vez). O
+  // serviço cuida da sanidade; nenhuma ação é travada pelo estado da rodada (§3.7).
+  app.post("/rodadas/:id/jogos", async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const { selecaoEsquerdaId, selecaoDireitaId } = jogoInputSchema.parse(req.body);
+    const rodada = await rodadas.adicionarJogo(id, selecaoEsquerdaId, selecaoDireitaId);
+    reply.code(201);
+    return rodada;
+  });
+
+  app.put("/jogos/:id", async (req) => {
+    const { id } = idParam.parse(req.params);
+    const { selecaoEsquerdaId, selecaoDireitaId } = jogoInputSchema.parse(req.body);
+    return rodadas.editarJogo(id, selecaoEsquerdaId, selecaoDireitaId); // 200 (rodada detalhada)
+  });
+
+  // DELETE devolve 200 + a rodada detalhada (NÃO 204) — DE PROPÓSITO: igual ao
+  // POST/PUT de jogo acima, pra o cliente tratar as três mutações de jogo de forma
+  // uniforme (sempre recebe a rodada atualizada). Diverge do DELETE de participante
+  // (204) conscientemente. Remover jogo COM palpites → JogoComPalpites → 409.
+  app.delete("/jogos/:id", async (req) => {
+    const { id } = idParam.parse(req.params);
+    return rodadas.removerJogo(id);
   });
 
   app.put("/jogos/:id/resultado", async (req) => {

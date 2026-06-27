@@ -46,6 +46,18 @@ export const montarRodadaInputSchema = z.object({
 export type MontarRodadaInput = z.infer<typeof montarRodadaInputSchema>;
 
 /**
+ * Corpo do `POST /rodadas` — o `jogos` (opcional) BIFURCA o comportamento da rota:
+ *   • `jogos` AUSENTE        → cria a rodada VAZIA (montagem incremental, `criarRodada`);
+ *   • `jogos: [≥1]`          → montagem ATÔMICA (`montarRodada`, fase + jogos de uma vez);
+ *   • `jogos: []` (presente) → 400 (o `.min(1)` rejeita — preserva o contrato da Fase 6).
+ * `.optional()` torna a CHAVE omitível; é o que distingue "ausente" (vazia) de "[]" (erro).
+ */
+export const rodadaPostBodySchema = z.object({
+  fase: faseRodadaSchema,
+  jogos: z.array(jogoInputSchema).min(1, "A rodada precisa de pelo menos um jogo.").optional(),
+});
+
+/**
  * Corpo do HTTP `PUT /rodadas/:id/estado`: o id vem da URL; o corpo traz o novo estado.
  * O estado é um GUIA, não uma trava (§3.7) — qualquer estado é aceito.
  */

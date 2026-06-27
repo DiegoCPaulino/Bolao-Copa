@@ -25,10 +25,10 @@ import { rotasSelecoes } from "./routes/selecoes.js";
  * Mapa erro-de-domínio → status HTTP, por `codigo` (o discriminante estável que
  * `domain/erros.ts` carrega justamente para o adaptador traduzir — CLAUDE.md §8.6).
  *
- * Aqui ficam só as exceções à regra geral: os "não encontrado" viram 404. Todo outro
- * `ErroDeDominio` é violação de regra de negócio = erro do cliente → o default é 400
- * (NÃO 500: erro de domínio é esperado, não é bug). Conflitos de estado usariam 409 —
- * ainda não há nenhum nesta fatia, mas é só acrescentar a entrada quando surgir.
+ * Aqui ficam só as exceções à regra geral: os "não encontrado" viram 404, e
+ * conflitos de ESTADO viram 409. Todo outro `ErroDeDominio` é violação de regra de
+ * negócio = erro do cliente → o default é 400 (NÃO 500: erro de domínio é esperado,
+ * não é bug).
  */
 const STATUS_POR_CODIGO: Readonly<Record<string, number>> = {
   PARTICIPANTE_NAO_ENCONTRADO: 404,
@@ -36,6 +36,8 @@ const STATUS_POR_CODIGO: Readonly<Record<string, number>> = {
   RODADA_NAO_ENCONTRADA: 404,
   JOGO_NAO_ENCONTRADO: 404,
   SELECAO_INVALIDA: 404,
+  // Conflito de estado: remover um jogo que já tem palpites (dado real) — 409.
+  JOGO_COM_PALPITES: 409,
 };
 
 const STATUS_PADRAO_DOMINIO = 400;
