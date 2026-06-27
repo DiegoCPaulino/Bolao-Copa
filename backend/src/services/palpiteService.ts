@@ -54,15 +54,39 @@ export async function registrarPalpites(
 
   const jogosDaRodada = new Set(rodada.jogos.map((jogo) => jogo.id));
   for (const palpite of palpites) {
-    if (!placarValido(palpite)) {
-      throw new PalpiteInvalido("Os gols devem ser números inteiros maiores ou iguais a zero.");
-    }
-    if (!jogosDaRodada.has(palpite.jogoId)) {
-      throw new JogoForaDaRodada(palpite.jogoId, rodadaId);
-    }
+    validarPalpite(jogosDaRodada, rodadaId, palpite);
   }
 
   return palpiteRepo.upsertMuitos(palpites.map((palpite) => ({ participanteId, ...palpite })));
+}
+
+/**
+ * Registra UM palpite (montagem INCREMENTAL: palpitar jogo a jogo). É um UPSERT de um
+ * jogo só — cria se é o primeiro, ATUALIZA se já existia (correção §8.6; nunca duplica,
+ * pelo `@@unique`). Mesmas validações do plural, via `validarPalpite` (rodada e
+ * participante existem; gols inteiros >= 0; jogo pertence à rodada). Jogos não tocados
+ * ficam EM BRANCO — "pular" é não chamar esta função para eles (a pendência segue
+ * binária: zero palpites = pendente).
+ */
+export async function registrarPalpite(
+  rodadaId: string,
+  participanteId: string,
+  jogoId: string,
+  golsEsquerda: number,
+  golsDireita: number,
+): Promise<Palpite> {
+  const rodada = await rodadaRepo.buscarPorId(rodadaId);
+  if (!rodada) {
+    throw new RodadaNaoEncontrada(rodadaId);
+  }
+  if (!(await participanteRepo.buscarPorId(participanteId))) {
+    throw new ParticipanteNaoEncontrado(participanteId);
+  }
+
+  const jogosDaRodada = new Set(rodada.jogos.map((jogo) => jogo.id));
+  validarPalpite(jogosDaRodada, rodadaId, { jogoId, golsEsquerda, golsDireita });
+
+  return palpiteRepo.upsert({ participanteId, jogoId, golsEsquerda, golsDireita });
 }
 
 /** Palpites já registrados de um participante na rodada (para pré-preencher a edição). */
@@ -120,6 +144,23 @@ export async function dadosTabelaPalpites(rodadaId: string): Promise<LinhaPalpit
     });
   }
   return [...porParticipante.values()];
+}
+
+/**
+ * Sanidade de UM palpite (reusada por `registrarPalpites` e `registrarPalpite`): placar
+ * válido (gols inteiros >= 0) e jogo pertencente à rodada. Uma regra, um lugar.
+ */
+function validarPalpite(
+  jogosDaRodada: ReadonlySet<string>,
+  rodadaId: string,
+  palpite: PalpiteEntrada,
+): void {
+  if (!placarValido(palpite)) {
+    throw new PalpiteInvalido("Os gols devem ser números inteiros maiores ou iguais a zero.");
+  }
+  if (!jogosDaRodada.has(palpite.jogoId)) {
+    throw new JogoForaDaRodada(palpite.jogoId, rodadaId);
+  }
 }
 
 function placarValido({ golsEsquerda, golsDireita }: PalpiteEntrada): boolean {

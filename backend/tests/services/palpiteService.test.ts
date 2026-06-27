@@ -111,6 +111,72 @@ describe.skipIf(!temBanco)("palpiteService (integração com Postgres)", () => {
     });
   });
 
+  describe("registrarPalpite (SINGULAR — incremental, upsert de 1 jogo)", () => {
+    it("cria 1 palpite e, ao relançar o MESMO jogo, atualiza sem duplicar (@@unique)", async () => {
+      const rodada = await montarRodada(2);
+      const j1 = rodada.jogos[0];
+      if (!j1) throw new Error("setup");
+      const p = await criarParticipante("Ana");
+
+      await service.registrarPalpite(rodada.id, p.id, j1.id, 2, 1);
+      expect(await prisma.palpite.count()).toBe(1);
+
+      // Relança o MESMO jogo (correção §8.6): atualiza a linha, não cria outra.
+      const corrigido = await service.registrarPalpite(rodada.id, p.id, j1.id, 3, 1);
+      expect(await prisma.palpite.count()).toBe(1);
+      expect(corrigido).toMatchObject({ golsEsquerda: 3, golsDireita: 1 });
+    });
+
+    it("palpitar jogo a jogo: cada chamada acrescenta um (sem mexer nos outros)", async () => {
+      const rodada = await montarRodada(2);
+      const j1 = rodada.jogos[0];
+      const j2 = rodada.jogos[1];
+      if (!j1 || !j2) throw new Error("setup");
+      const p = await criarParticipante("Ana");
+
+      await service.registrarPalpite(rodada.id, p.id, j1.id, 1, 0);
+      expect(await prisma.palpite.count()).toBe(1); // J2 fica EM BRANCO (pular implícito)
+      await service.registrarPalpite(rodada.id, p.id, j2.id, 0, 0);
+      expect(await prisma.palpite.count()).toBe(2);
+    });
+
+    it("rejeita jogo de outra rodada (JogoForaDaRodada)", async () => {
+      const r1 = await montarRodada(1);
+      const r2 = await montarRodada(1);
+      const jogoDeOutra = r2.jogos[0];
+      if (!jogoDeOutra) throw new Error("setup");
+      const p = await criarParticipante("Ana");
+
+      await expect(
+        service.registrarPalpite(r1.id, p.id, jogoDeOutra.id, 1, 0),
+      ).rejects.toBeInstanceOf(JogoForaDaRodada);
+    });
+
+    it("rejeita gols negativos (PalpiteInvalido)", async () => {
+      const rodada = await montarRodada(1);
+      const j1 = rodada.jogos[0];
+      if (!j1) throw new Error("setup");
+      const p = await criarParticipante("Ana");
+
+      await expect(service.registrarPalpite(rodada.id, p.id, j1.id, -1, 0)).rejects.toBeInstanceOf(
+        PalpiteInvalido,
+      );
+    });
+
+    it("rejeita rodada e participante inexistentes", async () => {
+      await expect(service.registrarPalpite("nao-existe", "x", "y", 0, 0)).rejects.toBeInstanceOf(
+        RodadaNaoEncontrada,
+      );
+
+      const rodada = await montarRodada(1);
+      const j1 = rodada.jogos[0];
+      if (!j1) throw new Error("setup");
+      await expect(
+        service.registrarPalpite(rodada.id, "nao-existe", j1.id, 0, 0),
+      ).rejects.toBeInstanceOf(ParticipanteNaoEncontrado);
+    });
+  });
+
   describe("participantesPendentes (binário: parcial NÃO é pendente)", () => {
     it("lista só quem tem ZERO palpites na rodada", async () => {
       const rodada = await montarRodada(2);

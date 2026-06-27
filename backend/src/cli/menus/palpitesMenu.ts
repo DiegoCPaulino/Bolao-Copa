@@ -1,7 +1,7 @@
 import { number, select } from "@inquirer/prompts";
 import { formatarPendencias } from "../../domain/whatsapp/pendencias.js";
 import { formatarTabelaPalpites } from "../../domain/whatsapp/tabelaPalpites.js";
-import { registrarPalpitesInputSchema } from "../../schemas/palpiteSchemas.js";
+import { registrarPalpiteInputSchema } from "../../schemas/palpiteSchemas.js";
 import * as palpites from "../../services/palpiteService.js";
 import * as participantesSvc from "../../services/participanteService.js";
 import * as rodadas from "../../services/rodadaService.js";
@@ -61,13 +61,54 @@ async function registrar(): Promise<void> {
   if (!participante) {
     return;
   }
+  await gerenciarPalpites(rodada.id, participante);
+}
 
-  // Pré-preenche com o palpite atual (upsert/correção §8.6): editar é só relançar.
-  const atuais = await palpites.palpitesDoParticipante(rodada.id, participante.id);
-  const atualPorJogo = new Map(atuais.map((p) => [p.jogoId, p]));
+/**
+ * Laço de palpite INCREMENTAL: lista os jogos da rodada com o palpite atual de cada um
+ * (J1 2x1, J2 —, …) e deixa palpitar/editar UM por vez. "Pular" é IMPLÍCITO — só age no
+ * jogo escolhido; jogo não escolhido fica em branco (a pendência segue binária).
+ * "Voltar" sai (parar e continuar depois). Cada palpite é persistido sozinho via o
+ * serviço SINGULAR. A opção "Voltar" é a saída REAL do while (nunca giramos sem fim).
+ */
+async function gerenciarPalpites(
+  rodadaId: string,
+  participante: participantesSvc.ParticipanteComIndicador,
+): Promise<void> {
+  let voltar = false;
+  while (!voltar) {
+    // Recarrega a cada volta para refletir o que já foi salvo (pré-preenche a edição).
+    const detalhe = await rodadas.detalharRodada(rodadaId);
+    const atuais = await palpites.palpitesDoParticipante(rodadaId, participante.id);
+    const atualPorJogo = new Map(atuais.map((p) => [p.jogoId, p]));
 
-  const entradas: palpites.PalpiteEntrada[] = [];
-  for (const jogo of detalhe.jogos) {
+    console.log(
+      `\nPalpites de ${rotulo(participante)} — ${FASE_LABEL[detalhe.fase]} (rodada ${detalhe.ordem}):`,
+    );
+    const escolha = await select({
+      message: "Palpitar/editar qual jogo?",
+      choices: [
+        ...detalhe.jogos.map((jogo) => {
+          const atual = atualPorJogo.get(jogo.id);
+          const placar = atual ? `${atual.golsEsquerda}x${atual.golsDireita}` : "—";
+          return {
+            name: `J${jogo.ordem}: ${jogo.selecaoEsquerda.nome} x ${jogo.selecaoDireita.nome}  [${placar}]`,
+            value: jogo.id,
+          };
+        }),
+        { name: "Voltar", value: "voltar" },
+      ],
+    });
+
+    if (escolha === "voltar") {
+      voltar = true;
+      break;
+    }
+
+    const jogo = detalhe.jogos.find((j) => j.id === escolha);
+    if (!jogo) {
+      continue;
+    }
     const atual = atualPorJogo.get(jogo.id);
     console.log(
       `\nJogo ${jogo.ordem}: ${jogo.selecaoEsquerda.bandeira} ${jogo.selecaoEsquerda.nome} x ${jogo.selecaoDireita.nome} ${jogo.selecaoDireita.bandeira}`,
@@ -84,24 +125,26 @@ async function registrar(): Promise<void> {
       min: 0,
       required: true,
     });
-    entradas.push({
+
+    // Zod (casca) → serviço SINGULAR (upsert de 1 jogo; correção livre §8.6).
+    const dados = registrarPalpiteInputSchema.parse({
+      rodadaId,
+      participanteId: participante.id,
       jogoId: jogo.id,
       golsEsquerda: golsEsquerda ?? 0,
       golsDireita: golsDireita ?? 0,
     });
+    await palpites.registrarPalpite(
+      dados.rodadaId,
+      dados.participanteId,
+      dados.jogoId,
+      dados.golsEsquerda,
+      dados.golsDireita,
+    );
+    console.log(
+      `\n✅ Palpite do jogo ${jogo.ordem} salvo: ${dados.golsEsquerda}x${dados.golsDireita}.\n`,
+    );
   }
-
-  const dados = registrarPalpitesInputSchema.parse({
-    rodadaId: rodada.id,
-    participanteId: participante.id,
-    palpites: entradas,
-  });
-  const salvos = await palpites.registrarPalpites(
-    dados.rodadaId,
-    dados.participanteId,
-    dados.palpites,
-  );
-  console.log(`\n✅ ${salvos.length} palpite(s) registrados para ${rotulo(participante)}.\n`);
 }
 
 async function verPendentes(): Promise<void> {

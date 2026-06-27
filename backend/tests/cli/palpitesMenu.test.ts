@@ -38,28 +38,30 @@ describe.skipIf(!temBanco)("menuPalpites (CLI leve, com Postgres)", () => {
     number.mockReset();
   });
 
-  it("registra palpites de um participante pelo menu e persiste", async () => {
+  it("palpita jogo a jogo pelo menu (incremental); pular deixa o outro em branco", async () => {
     const rodada = await montarRodada(2);
     const ana = await prisma.participante.create({ data: { nome: "Ana" } });
     const j1 = rodada.jogos[0];
     if (!j1) throw new Error("setup");
 
+    // Fluxo incremental: escolhe rodada e participante, palpita SÓ o J1, e "Voltar"
+    // (saída real do while). O J2 não é escolhido → fica em branco ("pular" implícito).
     select
-      .mockResolvedValueOnce("registrar") // submenu
+      .mockResolvedValueOnce("registrar") // menu principal: entrar em registrar
       .mockResolvedValueOnce(rodada.id) // qual rodada
       .mockResolvedValueOnce(ana.id) // qual participante
-      .mockResolvedValueOnce("voltar");
+      .mockResolvedValueOnce(j1.id) // laço de palpites: palpitar o J1
+      .mockResolvedValueOnce("voltar") // laço de palpites: sair (volta ao menu)
+      .mockResolvedValueOnce("voltar"); // menu principal: sair (término real)
     number
       .mockResolvedValueOnce(2) // J1 esquerda
-      .mockResolvedValueOnce(1) // J1 direita
-      .mockResolvedValueOnce(0) // J2 esquerda
-      .mockResolvedValueOnce(0); // J2 direita
+      .mockResolvedValueOnce(1); // J1 direita
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await menuPalpites();
     log.mockRestore();
 
-    expect(await prisma.palpite.count()).toBe(2);
+    expect(await prisma.palpite.count()).toBe(1); // só o J1 (J2 pulado)
     const j1Palpite = await prisma.palpite.findUnique({
       where: { participanteId_jogoId: { participanteId: ana.id, jogoId: j1.id } },
     });

@@ -7,7 +7,9 @@ import { golsSchema } from "./comuns.js";
  * empate é válido, §8.1) vem de `comuns.js`, compartilhado com resultados.
  */
 
-const palpiteJogoSchema = z.object({
+/** Um palpite (jogo + placar). EXPORTADO para ser reusado pelo registro SINGULAR
+ *  (incremental) e pela futura tela, além do array do plural. */
+export const palpiteJogoSchema = z.object({
   jogoId: z.string().min(1),
   golsEsquerda: golsSchema,
   golsDireita: golsSchema,
@@ -27,4 +29,24 @@ export type RegistrarPalpitesInput = z.infer<typeof registrarPalpitesInputSchema
  */
 export const registrarPalpitesBodySchema = z.object({
   palpites: z.array(palpiteJogoSchema).min(1, "Informe ao menos um palpite."),
+});
+
+/**
+ * Registro SINGULAR (montagem incremental, jogo a jogo). O CLI valida a entrada inteira
+ * (rodada + participante + 1 palpite); a futura tela usará o body abaixo (ids na URL).
+ */
+export const registrarPalpiteInputSchema = z.object({
+  rodadaId: z.string().min(1, "Selecione uma rodada."),
+  participanteId: z.string().min(1, "Selecione um participante."),
+  jogoId: z.string().min(1, "Selecione um jogo."),
+  golsEsquerda: golsSchema,
+  golsDireita: golsSchema,
+});
+
+export type RegistrarPalpiteInput = z.infer<typeof registrarPalpiteInputSchema>;
+
+/** Corpo do HTTP singular (futura tela): só o placar; rodada/participante/jogo na URL. */
+export const registrarPalpiteBodySchema = z.object({
+  golsEsquerda: golsSchema,
+  golsDireita: golsSchema,
 });
