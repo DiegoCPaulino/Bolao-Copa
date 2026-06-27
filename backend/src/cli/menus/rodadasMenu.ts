@@ -247,7 +247,7 @@ async function exportar(): Promise<void> {
   }
   const r = await rodadas.detalharRodada(id);
   // Formatador puro da Fase 2 (§12.1): recebe os jogos prontos e devolve string; o
-  // CLI só imprime o text/plain. 16-avos (16 jogos) exercita o fallback de keycap.
+  // CLI só imprime o text/plain. Cada confronto sai como "⚽ *J{n}*" (uniforme 1–16).
   const texto = formatarMensagemRodada(
     r.jogos.map((j) => ({
       ordem: j.ordem,

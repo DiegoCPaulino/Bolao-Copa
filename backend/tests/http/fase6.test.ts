@@ -122,7 +122,7 @@ describe.skipIf(!temBanco)("Fase 6.3b — rotas HTTP autenticadas", () => {
       const msg = await get(`/rodadas/${rodadaId}/export/mensagem`);
       expect(msg.headers["content-type"]).toContain("text/plain");
       expect(msg.body).toContain("BOLÃO COPA 2026 — OITAVAS DE FINAL");
-      expect(msg.body).toContain("Brasil x Argentina");
+      expect(msg.body).toContain("Brasil × Argentina");
     });
 
     it("PUT /jogos/:id/resultado registra placar; placar negativo → 400; resumo do jogo", async () => {

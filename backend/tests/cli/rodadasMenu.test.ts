@@ -75,7 +75,7 @@ describe.skipIf(!temBanco)("menuRodadas (CLI leve, com Postgres)", () => {
     log.mockRestore();
 
     expect(saida).toContain("BOLÃO COPA 2026 — OITAVAS DE FINAL");
-    expect(saida).toContain("1️⃣");
+    expect(saida).toContain("⚽ *J1*");
     expect(saida).toContain("Brasil");
   });
 });

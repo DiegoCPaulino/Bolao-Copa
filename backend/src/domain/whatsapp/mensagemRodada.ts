@@ -1,4 +1,4 @@
-import { keycap, negrito } from "./formato.js";
+import { negrito } from "./formato.js";
 import type { LadoDoJogo } from "./jogo.js";
 
 /** Um jogo da rodada para a mensagem de convite: posição + os dois lados. */
@@ -9,20 +9,22 @@ export type JogoDaRodada = {
 };
 
 /**
- * Mensagem da rodada (convite aos palpites) para o WhatsApp — funcional §12.1:
+ * Mensagem da rodada (convite aos palpites) para o WhatsApp — funcional §13.1:
  *
- *   🏆 *BOLÃO COPA 2026 — OITAVAS DE FINAL*
+ *   🏆 *BOLÃO COPA 2026 — 16-AVOS DE FINAL*
  *
- *   Mandem os palpites (placar dos 90 min) 👇
+ *   ⚽ *J1* 🇧🇷 Brasil × Argentina 🇦🇷
+ *   ⚽ *J2* 🇫🇷 França × Espanha 🇪🇸
  *
- *   1️⃣ 🇧🇷 Brasil x Argentina 🇦🇷
- *   2️⃣ 🇫🇷 França x Espanha 🇪🇸
+ * Função PURA. Estruturada por emoji (⚽ + bandeiras) e pela referência *J{n}* em
+ * texto — uniforme de 1 a 16 (alinhada com a tabela de palpites §13.2 e o resumo do
+ * jogo §13.3, que já usam "J1/J2"). SEM monoespaçado nem padding: as bandeiras têm
+ * largura variável e quebrariam qualquer alinhamento por espaços.
  *
- * Função PURA. Estruturada por emoji (keycap + bandeiras), SEM monoespaçado nem
- * padding: as bandeiras na frente têm largura variável e quebrariam qualquer
- * alinhamento por espaços (lição da §12.4/§12.5).
+ * O `n` é a `ordem` que já existe (não renumera nada). Sem linha de instrução: entre
+ * o título e os confrontos não há texto.
  *
- * `faseLabel` é o título da fase como deve aparecer (ex.: "OITAVAS DE FINAL"); o
+ * `faseLabel` é o título da fase como deve aparecer (ex.: "16-AVOS DE FINAL"); o
  * formatador o injeta no molde "BOLÃO COPA 2026 — <FASE>".
  */
 export function formatarMensagemRodada(
@@ -31,14 +33,8 @@ export function formatarMensagemRodada(
 ): string {
   const linhasJogos = jogos.map(
     (jogo) =>
-      `${keycap(jogo.ordem)} ${jogo.esquerda.bandeira} ${jogo.esquerda.nome} x ${jogo.direita.nome} ${jogo.direita.bandeira}`,
+      `⚽ ${negrito(`J${jogo.ordem}`)} ${jogo.esquerda.bandeira} ${jogo.esquerda.nome} × ${jogo.direita.nome} ${jogo.direita.bandeira}`,
   );
 
-  return [
-    `🏆 ${negrito(`BOLÃO COPA 2026 — ${faseLabel}`)}`,
-    "",
-    "Mandem os palpites (placar dos 90 min) 👇",
-    "",
-    ...linhasJogos,
-  ].join("\n");
+  return [`🏆 ${negrito(`BOLÃO COPA 2026 — ${faseLabel}`)}`, "", ...linhasJogos].join("\n");
 }

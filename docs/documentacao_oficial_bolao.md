@@ -269,12 +269,13 @@ Quatro estados em sequência. O estado é um **guia** (não uma trava — corre�
 ```
 🏆 *BOLÃO COPA 2026 — OITAVAS DE FINAL*
 
-Mandem os palpites (placar dos 90 min) 👇
-
-1️⃣ 🇧🇷 Brasil  x  Argentina 🇦🇷
-2️⃣ 🇫🇷 França   x  Espanha 🇪🇸
-3️⃣ 🇵🇹 Portugal x  Alemanha 🇩🇪
+⚽ *J1* 🇧🇷 Brasil × Argentina 🇦🇷
+⚽ *J2* 🇫🇷 França × Espanha 🇪🇸
+⚽ *J3* 🇵🇹 Portugal × Alemanha 🇩🇪
 ```
+> Sem linha de instrução entre o título e os confrontos. Cada jogo usa **⚽ *J{n}*** (a
+> `ordem` do jogo, uniforme de 1 a 16) — mesma referência "J1/J2" da tabela de palpites
+> (13.2) e do resumo do jogo (13.3).
 
 **13.2 Tabela de palpites**
 ```
