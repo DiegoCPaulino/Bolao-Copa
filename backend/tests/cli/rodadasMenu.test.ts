@@ -31,17 +31,23 @@ describe.skipIf(!temBanco)("menuRodadas (CLI leve, com Postgres)", () => {
     number.mockReset();
   });
 
-  it("monta a rodada final (2 jogos) selecionando os times par a par", async () => {
+  it("monta a rodada final (2 jogos) de forma INCREMENTAL: cria vazia e adiciona jogo a jogo", async () => {
     const [a, b, c, d] = await Promise.all([mkSel("A"), mkSel("B"), mkSel("C"), mkSel("D")]);
+    // Fluxo do menu incremental: cria a rodada VAZIA e cai no laço "gerenciar jogos",
+    // onde cada jogo é adicionado (esquerda → direita). As DUAS saídas "voltar" são a
+    // condição de término real dos dois `while` (gerenciar jogos, depois o menu) — sem
+    // elas o mock esgotaria em `undefined` e o laço giraria infinito.
     select
-      .mockResolvedValueOnce("montar") // submenu
-      .mockResolvedValueOnce("FINAL") // fase
-      .mockResolvedValueOnce(a.id) // jogo 1 esquerda
-      .mockResolvedValueOnce(b.id) // jogo 1 direita
-      .mockResolvedValueOnce(c.id) // jogo 2 esquerda
-      .mockResolvedValueOnce(d.id) // jogo 2 direita
-      .mockResolvedValueOnce("voltar");
-    number.mockResolvedValueOnce(2); // quantos jogos
+      .mockResolvedValueOnce("montar") // menu → "Montar rodada (nova)"
+      .mockResolvedValueOnce("FINAL") // fase → cria a rodada VAZIA
+      .mockResolvedValueOnce("adicionar") // gerenciar jogos → Adicionar jogo
+      .mockResolvedValueOnce(a.id) // jogo 1 — esquerda
+      .mockResolvedValueOnce(b.id) // jogo 1 — direita
+      .mockResolvedValueOnce("adicionar") // gerenciar jogos → Adicionar jogo
+      .mockResolvedValueOnce(c.id) // jogo 2 — esquerda
+      .mockResolvedValueOnce(d.id) // jogo 2 — direita
+      .mockResolvedValueOnce("voltar") // sai do laço de jogos
+      .mockResolvedValueOnce("voltar"); // sai do menu de rodadas
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await menuRodadas();
