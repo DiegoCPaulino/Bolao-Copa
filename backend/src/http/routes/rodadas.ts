@@ -81,6 +81,20 @@ export async function rotasRodadas(app: FastifyInstance): Promise<void> {
     return resultados.registrarResultado(id, golsEsquerda, golsDireita); // recálculo sob demanda
   });
 
+  // — leituras em JSON (8.4) — a pontuação/resumo são DERIVADOS na leitura (sob demanda);
+  // nada armazenado. A tela re-busca após lançar resultado para refletir o recálculo. —
+  app.get("/rodadas/:id/pontuacao", async (req) => {
+    const { id } = idParam.parse(req.params);
+    return resultados.pontosDaRodada(id); // já ordenado pela cascata; RodadaNaoEncontrada → 404
+  });
+
+  app.get("/jogos/:id/resumo", async (req) => {
+    const { id } = idParam.parse(req.params);
+    // 404 jogo; 400 RESULTADO_NAO_REGISTRADO se o jogo ainda não tem placar (sem resumo
+    // sem resultado — a tela só chama isto para jogo decidido). Erro sobe ao handler central.
+    return resultados.dadosResumoJogo(id);
+  });
+
   // — exportações (text/plain) —
   app.get("/rodadas/:id/export/mensagem", async (req, reply) => {
     const { id } = idParam.parse(req.params);

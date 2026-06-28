@@ -2,13 +2,21 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { formatarPendencias } from "../../domain/whatsapp/pendencias.js";
 import { formatarTabelaPalpites } from "../../domain/whatsapp/tabelaPalpites.js";
-import { registrarPalpitesBodySchema } from "../../schemas/palpiteSchemas.js";
+import {
+  registrarPalpiteBodySchema,
+  registrarPalpitesBodySchema,
+} from "../../schemas/palpiteSchemas.js";
 import * as palpitesService from "../../services/palpiteService.js";
 import * as rodadas from "../../services/rodadaService.js";
 import { FASE_LABEL } from "../../shared/rotulos.js";
 
 const idParam = z.object({ id: z.string().min(1) });
 const palpitesParams = z.object({ pid: z.string().min(1), rid: z.string().min(1) });
+const palpiteJogoParams = z.object({
+  pid: z.string().min(1),
+  rid: z.string().min(1),
+  jogoId: z.string().min(1),
+});
 const TEXTO_PLANO = "text/plain; charset=utf-8";
 
 /**
@@ -21,6 +29,29 @@ export async function rotasPalpites(app: FastifyInstance): Promise<void> {
     const { pid, rid } = palpitesParams.parse(req.params);
     const { palpites } = registrarPalpitesBodySchema.parse(req.body);
     return palpitesService.registrarPalpites(rid, pid, palpites); // valida jogos/rodada/participante
+  });
+
+  // Palpite SINGULAR (jogo a jogo, 8.4) — convive com o plural acima (path próprio). UPSERT:
+  // ids na URL, corpo só os gols. 200 (idempotente). Erros: 404 rodada/participante,
+  // 400 JogoForaDaRodada / PalpiteInvalido (handler central).
+  app.put("/participantes/:pid/rodadas/:rid/jogos/:jogoId/palpite", async (req) => {
+    const { pid, rid, jogoId } = palpiteJogoParams.parse(req.params);
+    const { golsEsquerda, golsDireita } = registrarPalpiteBodySchema.parse(req.body);
+    return palpitesService.registrarPalpite(rid, pid, jogoId, golsEsquerda, golsDireita);
+  });
+
+  // Palpites JÁ registrados de um participante na rodada (pré-preencher a tela). Read
+  // permissivo: devolve [] se não houver (não 404).
+  app.get("/participantes/:pid/rodadas/:rid/palpites", async (req) => {
+    const { pid, rid } = palpitesParams.parse(req.params);
+    return palpitesService.palpitesDoParticipante(rid, pid);
+  });
+
+  // Tabela de palpites em JSON (a tela renderiza a grade; o export text/plain §12.2 fica
+  // na rota /export/tabela abaixo). Derivada na leitura — nada armazenado.
+  app.get("/rodadas/:id/tabela", async (req) => {
+    const { id } = idParam.parse(req.params);
+    return palpitesService.dadosTabelaPalpites(id); // RodadaNaoEncontrada → 404
   });
 
   app.get("/rodadas/:id/pendentes", async (req) => {

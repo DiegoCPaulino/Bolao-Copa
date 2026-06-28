@@ -17,6 +17,7 @@
     "start": "node --env-file-if-exists=.env dist/http/server.js",
     "gerar-hash": "node scripts/gerarHash.mjs",
     "smoke:rodadas": "node --env-file=.env --import tsx scripts/smokeRodadas.ts",
+    "smoke:palpites": "node --env-file=.env --import tsx scripts/smokePalpites.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
