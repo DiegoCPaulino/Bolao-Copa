@@ -6,6 +6,7 @@ import {
   RodadaNaoEncontrada,
   SelecaoInvalida,
 } from "../../src/domain/erros.js";
+import { ID_SELECAO_A_DEFINIR } from "../../src/domain/selecoes.js";
 import * as service from "../../src/services/rodadaService.js";
 import { bancoDisponivel, limparBanco, prisma } from "../integration/db.js";
 
@@ -187,6 +188,25 @@ describe.skipIf(!temBanco)("rodadaService (integração com Postgres)", () => {
       await service.adicionarJogo(r.id, a.id, b.id);
       const r2 = await service.adicionarJogo(r.id, a.id, c.id); // "A" repetido entre jogos: ok
       expect(r2.jogos).toHaveLength(2);
+    });
+  });
+
+  describe('seleção "A definir" (placeholder de lado não decidido)', () => {
+    it('permite dois "A definir" no mesmo jogo (dois lados ainda não decididos)', async () => {
+      const aDefinir = await prisma.selecao.create({
+        data: { id: ID_SELECAO_A_DEFINIR, nome: "A definir", bandeira: "🏴" },
+      });
+      const r = await service.criarRodada("FINAL");
+      const r2 = await service.adicionarJogo(r.id, aDefinir.id, aDefinir.id);
+      expect(r2.jogos).toHaveLength(1);
+      expect(r2.jogos[0]?.selecaoEsquerdaId).toBe(ID_SELECAO_A_DEFINIR);
+      expect(r2.jogos[0]?.selecaoDireitaId).toBe(ID_SELECAO_A_DEFINIR);
+    });
+
+    it("ainda rejeita a mesma seleção REAL nos dois lados", async () => {
+      const a = await mkSel("A");
+      const r = await service.criarRodada("OITAVAS");
+      await expect(service.adicionarJogo(r.id, a.id, a.id)).rejects.toBeInstanceOf(JogoInvalido);
     });
   });
 

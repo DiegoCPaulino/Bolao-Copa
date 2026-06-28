@@ -5,6 +5,7 @@ import {
   RodadaNaoEncontrada,
   SelecaoInvalida,
 } from "../domain/erros.js";
+import { selecoesRepetidasInvalidas } from "../domain/selecoes.js";
 import type {
   EstadoRodada,
   FaseRodada,
@@ -156,7 +157,9 @@ async function validarParDeSelecoes(
   selecaoEsquerdaId: string,
   selecaoDireitaId: string,
 ): Promise<void> {
-  if (selecaoEsquerdaId === selecaoDireitaId) {
+  // Regra PURA do domínio: mesma seleção dos dois lados é proibida — EXCETO dois
+  // "A definir" (lados de mata-mata ainda não decididos), que são válidos (§ selecoes.ts).
+  if (selecoesRepetidasInvalidas(selecaoEsquerdaId, selecaoDireitaId)) {
     throw new JogoInvalido("Um jogo não pode ter a mesma seleção nos dois lados.");
   }
   await garantirSelecaoExiste(selecaoEsquerdaId);

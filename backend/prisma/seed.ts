@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { ID_SELECAO_A_DEFINIR } from "../src/domain/selecoes.js";
 
 const prisma = new PrismaClient();
 
@@ -80,8 +81,20 @@ async function main() {
     });
   }
 
+  // "A definir": placeholder para um lado de jogo ainda não decidido (mata-mata). É uma
+  // seleção NORMAL do catálogo, mas com ID FIXO (ID_SELECAO_A_DEFINIR, fonte única) — é
+  // por esse id que a regra de domínio a reconhece (nunca pelo nome). Bandeira 🏴 (emoji
+  // único estável; ⬛ como alternativa se renderizar mal). Idempotente (upsert por nome).
+  await prisma.selecao.upsert({
+    where: { nome: "A definir" },
+    update: { bandeira: "🏴" },
+    create: { id: ID_SELECAO_A_DEFINIR, nome: "A definir", bandeira: "🏴" },
+  });
+
   const total = await prisma.selecao.count();
-  console.log(`Seed: ${SELECOES.length} seleções processadas; catálogo agora tem ${total}.`);
+  console.log(
+    `Seed: ${SELECOES.length} seleções + "A definir" processadas; catálogo agora tem ${total}.`,
+  );
 }
 
 main()
