@@ -61,9 +61,16 @@ export async function rotasPalpites(app: FastifyInstance): Promise<void> {
 
   app.get("/rodadas/:id/export/tabela", async (req, reply) => {
     const { id } = idParam.parse(req.params);
-    const r = await rodadas.detalharRodada(id); // fase (e 404)
+    const r = await rodadas.detalharRodada(id); // fase + jogos (e 404)
     const linhas = await palpitesService.dadosTabelaPalpites(id);
+    // O formatador agrupa POR JOGO (§13.2): recebe os jogos (cabeçalhos) que `r` já traz +
+    // os palpites por participante (serviço inalterado) e transpõe.
     const texto = formatarTabelaPalpites(
+      r.jogos.map((j) => ({
+        ordem: j.ordem,
+        esquerda: { nome: j.selecaoEsquerda.nome, bandeira: j.selecaoEsquerda.bandeira },
+        direita: { nome: j.selecaoDireita.nome, bandeira: j.selecaoDireita.bandeira },
+      })),
       linhas.map((l) => ({
         nome: l.nome,
         apelido: l.apelido ?? undefined,

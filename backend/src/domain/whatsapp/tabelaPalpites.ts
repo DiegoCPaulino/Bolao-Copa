@@ -1,5 +1,6 @@
 import type { Placar } from "../pontuacao.js";
-import { monoBloco, negrito, placarCompacto, preencherDireita } from "./formato.js";
+import { negrito, placarCompacto } from "./formato.js";
+import type { LadoDoJogo } from "./jogo.js";
 import { nomeExibicao, type ParticipanteExibivel } from "./nomeExibicao.js";
 
 /** Um palpite na tabela: a qual jogo (ordem) e o placar palpitado. */
@@ -8,47 +9,73 @@ export type PalpiteNaTabela = {
   placar: Placar;
 };
 
-/** Uma linha da tabela: o participante e seus palpites nos jogos da rodada. */
+/** Uma linha POR PARTICIPANTE — a forma que o serviço entrega; o formatador reagrupa. */
 export type LinhaTabelaPalpites = ParticipanteExibivel & {
   palpites: ReadonlyArray<PalpiteNaTabela>;
 };
 
+/** Um jogo da rodada (ordem + os dois lados) — insumo do cabeçalho de cada bloco. */
+export type JogoNaTabela = {
+  ordem: number;
+  esquerda: LadoDoJogo;
+  direita: LadoDoJogo;
+};
+
 /**
- * Tabela de palpites para o WhatsApp — funcional §12.2:
+ * Tabela de palpites para o WhatsApp — funcional §13.2, agrupada POR JOGO:
  *
  *   📋 *PALPITES — OITAVAS*
  *
- *   ```
- *   Diego  J1 2x1 | J2 0x0 | J3 1x2 | J4 3x1
- *   Lucas  J1 1x1 | J2 2x0 | J3 1x1 | J4 2x2
- *   Ana    J1 0x0 | J2 1x1 | J3 2x2 | J4 1x0
- *   ```
+ *   ⚽ *J1* 🇧🇷 Brasil × Argentina 🇦🇷
+ *   Ana 1x0
+ *   Diego 2x1
  *
- * Função PURA. Recebe, por participante, os palpites já nos jogos da rodada;
- * não busca nem calcula (CLAUDE.md §3.3).
+ *   ⚽ *J2* 🇫🇷 França × Espanha 🇪🇸
+ *   _(sem palpites ainda)_
  *
- * CONFLITO do exemplo do §12.2 e DECISÃO (§15.4): o molde mostra nomes em
- * *negrito* E colunas alinhadas — impossível ter os dois no WhatsApp (negrito
- * NÃO renderiza dentro de bloco monoespaçado, e alinhar exige monoespaçado).
- * Priorizamos o ALINHAMENTO (o valor de uma tabela é ser escaneável): usamos
- * `monoBloco`, preenchemos o nome para alinhar a coluna J1 e deixamos os nomes
- * SEM negrito. O header em negrito fica FORA do bloco.
- *
- * EDGE (documentado): em 16-avos (16 jogos) a linha fica longa e pode quebrar no
- * celular; o refino de layout fica para o polimento. Aqui, fiéis ao §12.2.
+ * Função PURA. RECEBE os jogos (para os cabeçalhos) e os palpites JÁ por participante
+ * (o serviço entrega assim); o formatador apenas TRANSPÕE para por jogo — não busca
+ * nem calcula (CLAUDE.md §3.3). O cabeçalho do jogo usa o MESMO formato da mensagem
+ * da rodada (§13.1). Dentro de cada jogo, só quem palpitou aquele jogo, em ordem
+ * ALFABÉTICA por nome (apelido só desambigua homônimos, via `nomeExibicao` —
+ * consistente com os outros artefatos). Jogo sem palpites mostra o cabeçalho + um
+ * placeholder discreto (não some o jogo). Estrutura por emoji + negrito, SEM tabela
+ * nem monoespaçado (consistente com o resumo do jogo §13.3).
  */
 export function formatarTabelaPalpites(
+  jogos: ReadonlyArray<JogoNaTabela>,
   linhas: ReadonlyArray<LinhaTabelaPalpites>,
   faseLabel: string,
 ): string {
-  const preparadas = linhas.map((linha) => ({
-    nome: nomeExibicao(linha, linhas),
-    colunas: linha.palpites.map((p) => `J${p.jogo} ${placarCompacto(p.placar)}`).join(" | "),
-  }));
+  const partes: string[] = [`📋 ${negrito(`PALPITES — ${faseLabel}`)}`];
 
-  const larguraNome = preparadas.reduce((max, x) => Math.max(max, x.nome.length), 0);
-  const rows = preparadas.map((x) => `${preencherDireita(x.nome, larguraNome)}  ${x.colunas}`);
+  for (const jogo of jogos) {
+    partes.push(""); // linha em branco separando os blocos de jogo
+    partes.push(
+      `⚽ ${negrito(`J${jogo.ordem}`)} ${jogo.esquerda.bandeira} ${jogo.esquerda.nome} × ${jogo.direita.nome} ${jogo.direita.bandeira}`,
+    );
 
-  const header = `📋 ${negrito(`PALPITES — ${faseLabel}`)}`;
-  return `${header}\n\n${monoBloco(rows.join("\n"))}`;
+    // Reagrupa: quem palpitou ESTE jogo, em ordem alfabética (apelido como desempate).
+    const doJogo = linhas
+      .flatMap((linha) => {
+        const palpite = linha.palpites.find((p) => p.jogo === jogo.ordem);
+        return palpite ? [{ exibivel: linha, placar: palpite.placar }] : [];
+      })
+      .sort(
+        (a, b) =>
+          a.exibivel.nome.localeCompare(b.exibivel.nome, "pt-BR") ||
+          (a.exibivel.apelido ?? "").localeCompare(b.exibivel.apelido ?? "", "pt-BR"),
+      );
+
+    if (doJogo.length === 0) {
+      partes.push("_(sem palpites ainda)_");
+      continue;
+    }
+    const exibiveis = doJogo.map((d) => d.exibivel);
+    for (const d of doJogo) {
+      partes.push(`${nomeExibicao(d.exibivel, exibiveis)} ${placarCompacto(d.placar)}`);
+    }
+  }
+
+  return partes.join("\n");
 }

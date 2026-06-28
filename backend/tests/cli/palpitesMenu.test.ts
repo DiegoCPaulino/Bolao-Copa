@@ -88,6 +88,7 @@ describe.skipIf(!temBanco)("menuPalpites (CLI leve, com Postgres)", () => {
     log.mockRestore();
 
     expect(saida).toContain("PALPITES —");
-    expect(saida).toContain("J1 2x1");
+    expect(saida).toContain("⚽ *J1*"); // tabela agora é POR JOGO (§13.2)
+    expect(saida).toContain("Ana 2x1"); // palpite do participante sob o cabeçalho do jogo
   });
 });

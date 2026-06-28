@@ -2,15 +2,19 @@ import { negrito } from "./formato.js";
 import { nomeExibicao, type ParticipanteExibivel } from "./nomeExibicao.js";
 
 /**
- * Pendências de palpite da rodada para o WhatsApp — funcional §12.8:
+ * Pendências de palpite da rodada para o WhatsApp — funcional §13.8, em LISTA:
  *
  *   ⚠️ *FALTAM PALPITES — OITAVAS*
- *   Ainda não enviaram: Ana, João, Pedro
- *   Mandem antes do início dos jogos! ⏰
+ *   • Ana
+ *   • João
+ *   • Pedro
+ *   Mandem antes dos jogos! ⏰
  *
  * Função PURA. Recebe a lista de quem AINDA NÃO palpitou já pronta (derivada por
  * `participantesSemPalpite` no domínio) e o rótulo da fase já formatado (ex.:
- * "OITAVAS"). Não busca nem calcula nada (CLAUDE.md §3.3).
+ * "OITAVAS"). Não busca nem calcula nada (CLAUDE.md §3.3). Um nome por linha (marcador
+ * "•"), em ordem ALFABÉTICA (apelido como desempate); apelido só desambigua homônimos
+ * (via `nomeExibicao`).
  *
  * LIMITAÇÃO (§15.4, refinamento adiado para a Fase 5): a desambiguação usa o
  * próprio subconjunto de pendentes como universo. Dois homônimos do elenco
@@ -21,10 +25,15 @@ export function formatarPendencias(
   pendentes: ReadonlyArray<ParticipanteExibivel>,
   faseLabel: string,
 ): string {
-  const nomes = pendentes.map((participante) => nomeExibicao(participante, pendentes));
+  const ordenados = [...pendentes].sort(
+    (a, b) =>
+      a.nome.localeCompare(b.nome, "pt-BR") ||
+      (a.apelido ?? "").localeCompare(b.apelido ?? "", "pt-BR"),
+  );
+  const linhas = ordenados.map((p) => `• ${nomeExibicao(p, ordenados)}`);
   return [
     `⚠️ ${negrito(`FALTAM PALPITES — ${faseLabel}`)}`,
-    `Ainda não enviaram: ${nomes.join(", ")}`,
-    "Mandem antes do início dos jogos! ⏰",
+    ...linhas,
+    "Mandem antes dos jogos! ⏰",
   ].join("\n");
 }

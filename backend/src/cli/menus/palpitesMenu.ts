@@ -169,13 +169,20 @@ async function exportarTabela(): Promise<void> {
   if (!rodada) {
     return;
   }
-  const linhas = await palpites.dadosTabelaPalpites(rodada.id);
-  if (linhas.length === 0) {
-    console.log("\n(ninguém palpitou ainda nesta rodada)\n");
+  // Tabela agrupada POR JOGO (§13.2): precisa dos jogos (cabeçalhos) → detalha a rodada.
+  const detalhe = await rodadas.detalharRodada(rodada.id);
+  if (detalhe.jogos.length === 0) {
+    console.log("\n(rodada sem jogos)\n");
     return;
   }
-  // Formatador puro §12.2: recebe os palpites prontos e devolve string; o CLI imprime.
+  const linhas = await palpites.dadosTabelaPalpites(rodada.id);
+  // Formatador puro §13.2: recebe os jogos + os palpites prontos e devolve string.
   const texto = formatarTabelaPalpites(
+    detalhe.jogos.map((j) => ({
+      ordem: j.ordem,
+      esquerda: { nome: j.selecaoEsquerda.nome, bandeira: j.selecaoEsquerda.bandeira },
+      direita: { nome: j.selecaoDireita.nome, bandeira: j.selecaoDireita.bandeira },
+    })),
     linhas.map((l) => ({
       nome: l.nome,
       apelido: l.apelido ?? undefined,

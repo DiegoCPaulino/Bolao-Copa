@@ -280,12 +280,16 @@ Quatro estados em sequência. O estado é um **guia** (não uma trava — corre�
 > `ordem` do jogo, uniforme de 1 a 16) — mesma referência "J1/J2" da tabela de palpites
 > (13.2) e do resumo do jogo (13.3).
 
-**13.2 Tabela de palpites**
+**13.2 Tabela de palpites** — agrupada **por jogo** (cabeçalho no formato da §13.1; palpites em ordem alfabética; só quem palpitou; jogo sem palpites mostra o placeholder).
 ```
 📋 *PALPITES — OITAVAS*
 
-*Diego*  J1 2x1 | J2 0x0 | J3 1x2
-*Lucas*  J1 1x1 | J2 2x0 | J3 1x1
+⚽ *J1* 🇧🇷 Brasil × Argentina 🇦🇷
+Ana 1x0
+Diego 2x1
+
+⚽ *J2* 🇫🇷 França × Espanha 🇪🇸
+_(sem palpites ainda)_
 ```
 
 **13.3 Resumo do jogo**
@@ -341,11 +345,13 @@ Diego, Lucas, Ana, João, Pedro, ...
 > (§8.9). Pote bruto, totais e os 25% do organizador são **privados** (só no painel/resumo
 > geral), nunca vão para o grupo. Seção vazia (ex.: ninguém pago) é omitida por completo.
 
-**13.8 Pendências de palpite**
+**13.8 Pendências de palpite** — em **lista** (um nome por linha, marcador "•", ordem alfabética).
 ```
 ⚠️ *FALTAM PALPITES — OITAVAS*
-Ainda não enviaram: Ana, João, Pedro
-Mandem antes do início dos jogos! ⏰
+• Ana
+• João
+• Pedro
+Mandem antes dos jogos! ⏰
 ```
 
 ## 14. Modelo conceitual (entidades) — visão não técnica
