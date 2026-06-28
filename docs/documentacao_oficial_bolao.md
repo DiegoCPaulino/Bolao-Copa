@@ -257,6 +257,9 @@ Quatro estados em sequência. O estado é um **guia** (não uma trava — corre�
 **12.7 Rodada (detalhe)** — jogos; registrar palpites e ver quem falta; registrar resultados; pontuação; artefatos da rodada.
 **12.8 Catálogo de seleções** — seleções pré-carregadas (nome + bandeira), dado de referência.
 
+- **Seleção especial "A definir"** (id estável `a-definir`, bandeira 🏴): placeholder usado quando um lado do confronto ainda **não foi decidido** (depende de um jogo anterior do mata-mata). O organizador monta o jogo com "A definir" no lado vazio e **edita depois**, trocando pela seleção real quando ela sair. É uma seleção normal do catálogo (flui por seleção/jogo/exportação).
+- **Exceção da regra "seleções de um jogo devem ser diferentes":** dois "A definir" no **mesmo** jogo é **válido** — são dois espaços vazios, não a mesma seleção repetida. A "A definir" é reconhecida pelo **id** (`a-definir`), nunca pelo nome.
+
 ## 13. Artefatos e exportação para WhatsApp
 
 **Princípio central:** *tudo que o organizador vê pode virar um texto formatado pra colar no grupo.* **Cópia/exportação fácil é a prioridade número um** (e já vale na Fase 1, impressa no terminal).
@@ -420,6 +423,7 @@ Separar o que é **armazenado** do que é **derivado** (calculado na hora): deri
 | 27 | Online + deploy | Armazenamento central. | 2 |
 | 28 | Multi-dispositivo | Celular + computador. | 2 |
 | 29 | Autenticação | Login pessoal do organizador. | 2 |
+| 30 | Seleção "A definir" | Placeholder (id `a-definir`, 🏴) p/ lado não decidido; dois "A definir" no mesmo jogo é válido (ver §12.8). | 1 |
 
 *Não há pontos funcionais em aberto. Mudou apenas a ordem de entrega (seção 2).*
 
