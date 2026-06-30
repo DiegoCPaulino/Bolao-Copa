@@ -1,15 +1,15 @@
-import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiError } from "@/api/client";
 import * as rodadasApi from "@/api/rodadas";
-import type { Estado, Fase, Jogo, RodadaDetalhada, RodadaResumo } from "@/api/rodadas";
+import type { Fase, Jogo, RodadaDetalhada, RodadaResumo } from "@/api/rodadas";
 import { listarSelecoes } from "@/api/selecoes";
 import type { Selecao } from "@/api/selecoes";
 import { ComboboxSelecao } from "@/components/ComboboxSelecao";
 import { CopiarWhatsApp } from "@/components/CopiarWhatsApp";
-import { ESTADOS_ORDEM, EstadoBadge, FASE_LABEL, FASES } from "@/components/rodada/labels";
+import { EstadoBadge, FASE_LABEL, FASES } from "@/components/rodada/labels";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -214,8 +214,6 @@ function DrawerRodada({
   const [ocupado, setOcupado] = useState(false);
   const [textoExport, setTextoExport] = useState<string | null>(null);
 
-  const idxEstado = ESTADOS_ORDEM.indexOf(rodada.estado);
-
   // Wrapper das mutações: evita duplo-clique (in-flight) e traduz erros em toast. O
   // `ocupado` é guarda transitória — NÃO é trava por estado (a edição segue sempre liberada).
   async function comGuard(fn: () => Promise<void>) {
@@ -230,13 +228,6 @@ function DrawerRodada({
       setOcupado(false);
     }
   }
-
-  const mudarEstado = (estado: Estado) =>
-    comGuard(async () => {
-      const r = await rodadasApi.definirEstado(rodada.id, estado);
-      aplicarRodada({ ...rodada, estado: r.estado }); // MERGE: a resposta vem sem `jogos`
-      onListaMudou();
-    });
 
   const adicionar = () =>
     comGuard(async () => {
@@ -280,30 +271,9 @@ function DrawerRodada({
         </SheetTitle>
         <SheetDescription>
           Monte os confrontos. Adicionar, editar e remover jogo funcionam em qualquer estado.
+          O ciclo de vida da rodada agora é controlado na página da rodada.
         </SheetDescription>
       </SheetHeader>
-
-      {/* Ciclo de vida: estado EXIBIDO + avançar/retroceder (limites só nas pontas). NÃO
-          trava a montagem de jogos — é guia, não trava (§3.7). */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={idxEstado <= 0 || ocupado}
-          onClick={() => mudarEstado(ESTADOS_ORDEM[idxEstado - 1] as Estado)}
-        >
-          <ChevronLeft className="size-4" /> Retroceder
-        </Button>
-        <EstadoBadge estado={rodada.estado} />
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={idxEstado >= ESTADOS_ORDEM.length - 1 || ocupado}
-          onClick={() => mudarEstado(ESTADOS_ORDEM[idxEstado + 1] as Estado)}
-        >
-          Avançar <ChevronRight className="size-4" />
-        </Button>
-      </div>
 
       {/* Jogos atuais */}
       <div className="flex flex-col gap-2">
