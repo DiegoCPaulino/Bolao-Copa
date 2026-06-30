@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiError } from "@/api/client";
 import * as rodadasApi from "@/api/rodadas";
@@ -8,6 +9,7 @@ import { listarSelecoes } from "@/api/selecoes";
 import type { Selecao } from "@/api/selecoes";
 import { ComboboxSelecao } from "@/components/ComboboxSelecao";
 import { CopiarWhatsApp } from "@/components/CopiarWhatsApp";
+import { ESTADOS_ORDEM, EstadoBadge, FASE_LABEL, FASES } from "@/components/rodada/labels";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,46 +22,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-
-// Rótulos de apresentação (o domínio é em pt-BR; aqui só formatamos). Ordem dos estados =
-// a sequência do ciclo de vida (guia), usada no avançar/retroceder.
-const FASES: Fase[] = ["DEZESSEIS_AVOS", "OITAVAS", "QUARTAS", "SEMIFINAIS", "FINAL"];
-const FASE_LABEL: Record<Fase, string> = {
-  DEZESSEIS_AVOS: "16-avos de final",
-  OITAVAS: "Oitavas de final",
-  QUARTAS: "Quartas de final",
-  SEMIFINAIS: "Semifinais",
-  FINAL: "Final (3º + final)",
-};
-const ESTADOS_ORDEM: Estado[] = ["MONTADA", "PALPITES_ABERTOS", "RESULTADOS_EM_ANDAMENTO", "ENCERRADA"];
-const ESTADO_LABEL: Record<Estado, string> = {
-  MONTADA: "Montada",
-  PALPITES_ABERTOS: "Palpites abertos",
-  RESULTADOS_EM_ANDAMENTO: "Resultados em andamento",
-  ENCERRADA: "Encerrada",
-};
-
-/** Pill de estado da rodada — MESMO vocabulário visual do StatusBadge (tokens centrais),
- *  mas próprio do domínio de rodada. Estado é EXIBIDO; nunca trava a edição de jogos. */
-function EstadoBadge({ estado }: { estado: Estado }) {
-  const tom: Record<Estado, string> = {
-    MONTADA: "bg-muted text-muted-foreground",
-    PALPITES_ABERTOS: "bg-info-soft text-info",
-    RESULTADOS_EM_ANDAMENTO: "bg-warning-soft text-warning",
-    ENCERRADA: "bg-success-soft text-success",
-  };
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-        tom[estado],
-      )}
-    >
-      {ESTADO_LABEL[estado]}
-    </span>
-  );
-}
 
 /**
  * Tela de Rodadas (Fatia 8.3-B) — LISTA as rodadas e MONTA os jogos (define os
@@ -77,6 +39,7 @@ export function Rodadas() {
   const [criando, setCriando] = useState(false);
 
   const [rodadaAberta, setRodadaAberta] = useState<RodadaDetalhada | null>(null);
+  const navigate = useNavigate();
 
   async function recarregar() {
     setCarregando(true);
@@ -149,22 +112,30 @@ export function Rodadas() {
       {!carregando && !erroCarga && lista.length > 0 && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {lista.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => void abrir(r.id)}
-              className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/40 hover:bg-accent"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-display text-lg font-semibold uppercase tracking-wide">
-                  {FASE_LABEL[r.fase]}
+            <div key={r.id} className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm">
+              {/* Clique no card → ABRE a rodada (operação: palpites/resultados/pontuação). */}
+              <button
+                type="button"
+                onClick={() => navigate(`/rodadas/${r.id}`)}
+                className="flex flex-col gap-2 rounded-md text-left outline-none transition-colors hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-display text-lg font-semibold uppercase tracking-wide">
+                    {FASE_LABEL[r.fase]}
+                  </span>
+                  <EstadoBadge estado={r.estado} />
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {r._count.jogos} jogo(s) — toque para abrir
                 </span>
-                <EstadoBadge estado={r.estado} />
+              </button>
+              {/* Montar jogos = CONFIGURAÇÃO (drawer da 8.3, inalterado). */}
+              <div>
+                <Button variant="outline" size="sm" onClick={() => void abrir(r.id)}>
+                  <Pencil className="size-4" /> Montar jogos
+                </Button>
               </div>
-              <span className="text-sm text-muted-foreground">
-                {r._count.jogos} jogo(s) — toque para montar
-              </span>
-            </button>
+            </div>
           ))}
         </div>
       )}

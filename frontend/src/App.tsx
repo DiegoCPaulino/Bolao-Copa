@@ -7,6 +7,7 @@ import { Login } from "@/pages/Login";
 import { Pagamentos } from "@/pages/Pagamentos";
 import { Painel } from "@/pages/Painel";
 import { Participantes } from "@/pages/Participantes";
+import { RodadaDetalhe } from "@/pages/RodadaDetalhe";
 import { Rodadas } from "@/pages/Rodadas";
 
 /**
@@ -26,6 +27,7 @@ export function App() {
               <Route path="/participantes" element={<Participantes />} />
               <Route path="/pagamentos" element={<Pagamentos />} />
               <Route path="/rodadas" element={<Rodadas />} />
+              <Route path="/rodadas/:id" element={<RodadaDetalhe />} />
             </Route>
           </Route>
         </Routes>
