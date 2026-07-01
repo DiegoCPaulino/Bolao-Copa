@@ -5,6 +5,7 @@ import { ApiError } from "@/api/client";
 import * as pagamentosApi from "@/api/pagamentos";
 import type { PagamentoParticipante, TotaisPagamento } from "@/api/pagamentos";
 import { CopiarWhatsApp } from "@/components/CopiarWhatsApp";
+import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { reais } from "@/lib/formato";
 
 // Sentinela: Radix Select não aceita value vazio, então "Todos" usa um token.
 const TODOS = "__todos__";
@@ -25,12 +27,6 @@ const TODOS = "__todos__";
 /** Rótulo de exibição: nome + apelido entre aspas, se houver. */
 function rotulo(p: { nome: string; apelido: string | null }): string {
   return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
-}
-
-// Formatação de moeda — APRESENTAÇÃO, não cálculo. Os valores já vêm prontos da API; aqui
-// só damos o separador de milhar pt-BR (ex.: 1065 → "R$ 1.065"). A tela NUNCA soma nada.
-function reais(valor: number): string {
-  return `R$ ${valor.toLocaleString("pt-BR")}`;
 }
 
 const TOTAIS_VAZIO: TotaisPagamento = { esperado: 0, recebido: 0, falta: 0 };
@@ -138,9 +134,9 @@ export function Pagamentos() {
 
       {/* Totais — VINDOS DA API (a tela nunca soma). */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <CardTotal titulo="Esperado" valor={totais.esperado} />
-        <CardTotal titulo="Recebido" valor={totais.recebido} tom="success" />
-        <CardTotal titulo="Falta receber" valor={totais.falta} tom="warning" />
+        <StatCard titulo="Esperado" valor={reais(totais.esperado)} />
+        <StatCard titulo="Recebido" valor={reais(totais.recebido)} tom="success" />
+        <StatCard titulo="Falta receber" valor={reais(totais.falta)} tom="warning" />
       </div>
 
       {/* Busca / filtro / ordenação */}
@@ -270,24 +266,5 @@ export function Pagamentos() {
         </DialogContent>
       </Dialog>
     </section>
-  );
-}
-
-/** Card de total (derivado da API). Número em fonte de display; tom semântico opcional. */
-function CardTotal({
-  titulo,
-  valor,
-  tom,
-}: {
-  titulo: string;
-  valor: number;
-  tom?: "success" | "warning";
-}) {
-  const cor = tom === "success" ? "text-success" : tom === "warning" ? "text-warning" : "text-foreground";
-  return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{titulo}</p>
-      <p className={`font-display text-2xl font-bold tabular-nums ${cor}`}>{reais(valor)}</p>
-    </div>
   );
 }
