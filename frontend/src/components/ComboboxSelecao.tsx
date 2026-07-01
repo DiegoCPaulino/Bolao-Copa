@@ -1,6 +1,6 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Selecao } from "@/api/selecoes";
+import { ID_SELECAO_A_DEFINIR, type Selecao } from "@/api/selecoes";
 import { SelecaoLabel } from "@/components/Confronto";
 import { cn } from "@/lib/utils";
 
@@ -32,8 +32,12 @@ export function ComboboxSelecao({
 
   const visiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase();
+    // Exclui a seleção já escolhida do outro lado (evita Brasil × Brasil na UI), EXCETO a
+    // "A definir": dois lados a-definir são válidos no domínio (selecoesRepetidasInvalidas).
     return selecoes.filter(
-      (s) => s.id !== excluirId && (termo === "" || s.nome.toLowerCase().includes(termo)),
+      (s) =>
+        (s.id !== excluirId || s.id === ID_SELECAO_A_DEFINIR) &&
+        (termo === "" || s.nome.toLowerCase().includes(termo)),
     );
   }, [selecoes, busca, excluirId]);
 
