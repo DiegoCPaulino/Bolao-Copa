@@ -7,6 +7,7 @@ import {
   participanteInputSchema,
 } from "../../schemas/participanteSchemas.js";
 import * as participantes from "../../services/participanteService.js";
+import * as perfil from "../../services/perfilService.js";
 
 /**
  * Rotas de Participantes — ROTA-PILOTO (Fatia 6.3a): fixa o molde que as outras seis
@@ -51,6 +52,14 @@ export async function rotasParticipantes(app: FastifyInstance): Promise<void> {
       throw new ParticipanteNaoEncontrado(id);
     }
     return participante;
+  });
+
+  // PERFIL consolidado (§12.4) — DTO com os 4 blocos, 100% derivado na leitura. Rota
+  // fina: o serviço COMPÕE (indicações + pagamento + desempenho) e lança
+  // ParticipanteNaoEncontrado → 404 pelo handler central.
+  app.get("/participantes/:id/perfil", async (req) => {
+    const { id } = idParamSchema.parse(req.params);
+    return perfil.montarPerfil(id);
   });
 
   // CRIAR — 201 com o recurso criado. Reusa o MESMO schema Zod do CLI.

@@ -14,7 +14,7 @@ import { calcularPontos, type Placar, type Pontos } from "../domain/pontuacao.js
 import * as palpiteRepo from "../repositories/palpiteRepository.js";
 import type { Participante } from "../repositories/participanteRepository.js";
 import * as participanteRepo from "../repositories/participanteRepository.js";
-import type { Jogo } from "../repositories/rodadaRepository.js";
+import type { FaseRodada, Jogo } from "../repositories/rodadaRepository.js";
 import * as rodadaRepo from "../repositories/rodadaRepository.js";
 
 /**
@@ -35,6 +35,20 @@ export type LinhaPontuacao = {
   pontos: number;
   placaresExatos: number;
   resultadosCertos: number;
+};
+
+/**
+ * Pontos de UM participante em UMA rodada (derivado). `decidida` = a rodada já tem ao
+ * menos um jogo com placar; quando false, `pontos` é 0 mas ainda "não jogou" — o
+ * consumidor distingue "fez 0" de "aguardando" (perfil §12.4).
+ */
+export type DesempenhoRodada = {
+  rodadaId: string;
+  fase: FaseRodada;
+  ordem: number;
+  pontos: number;
+  placaresExatos: number;
+  decidida: boolean;
 };
 
 /** Palpite de um participante com os pontos JÁ calculados, para o resumo do jogo. */
@@ -96,6 +110,31 @@ export async function classificacaoGeral(): Promise<LinhaPontuacao[]> {
   const participantes = await participanteRepo.listarTodos();
   const palpites = await palpiteRepo.listarTodos();
   return ranquear(jogos, participantes, palpites);
+}
+
+/**
+ * Desempenho de UM participante rodada a rodada (breakdown por fase — §12.4). AGREGA,
+ * não recalcula: reusa `pontosDaRodada` (a regra 3/1/0 e a cascata já vivem lá) e só
+ * filtra a linha da pessoa. Inclui TODAS as rodadas na ordem — o `decidida` deixa o
+ * consumidor distinguir "fez 0 pontos" de "rodada ainda sem resultado".
+ */
+export async function desempenhoPorRodada(participanteId: string): Promise<DesempenhoRodada[]> {
+  const rodadas = await rodadaRepo.listar(); // já ordenadas por `ordem` asc
+  const linhas: DesempenhoRodada[] = [];
+  for (const rodada of rodadas) {
+    const ranking = await pontosDaRodada(rodada.id);
+    const linha = ranking.find((l) => l.id === participanteId);
+    const decidida = (await rodadaRepo.listarJogosComResultado(rodada.id)).length > 0;
+    linhas.push({
+      rodadaId: rodada.id,
+      fase: rodada.fase,
+      ordem: rodada.ordem,
+      pontos: linha?.pontos ?? 0,
+      placaresExatos: linha?.placaresExatos ?? 0,
+      decidida,
+    });
+  }
+  return linhas;
 }
 
 /** Dados do resumo de um jogo (§12.3): cada palpite com seus pontos já calculados. */

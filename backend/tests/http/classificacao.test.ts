@@ -49,7 +49,10 @@ describe.skipIf(!temBanco)("GET /classificacao (JSON, HTTP autenticado)", () => 
   it("200 + lista ORDENADA pela cascata (mais pontos primeiro)", async () => {
     const [e, d] = await Promise.all([novaSelecao(), novaSelecao()]);
     const rodada = (
-      await post("/rodadas", { fase: "OITAVAS", jogos: [{ selecaoEsquerdaId: e, selecaoDireitaId: d }] })
+      await post("/rodadas", {
+        fase: "OITAVAS",
+        jogos: [{ selecaoEsquerdaId: e, selecaoDireitaId: d }],
+      })
     ).json() as { id: string; jogos: { id: string }[] };
     const jogoId = rodada.jogos[0]?.id ?? "";
 
@@ -74,7 +77,7 @@ describe.skipIf(!temBanco)("GET /classificacao (JSON, HTTP autenticado)", () => 
     expect(linhas[0]).toMatchObject({ id: ana.id, nome: "Ana", pontos: 3 });
     expect(linhas[1]).toMatchObject({ id: bruno.id, nome: "Bruno", pontos: 1 });
     // Invariante da ordenação: nunca sobe quem tem menos pontos.
-    expect(linhas[0].pontos).toBeGreaterThanOrEqual(linhas[1].pontos);
+    expect(linhas[0]?.pontos ?? 0).toBeGreaterThanOrEqual(linhas[1]?.pontos ?? 0);
   });
 
   it("sem cookie → 401 (rota nasce protegida)", async () => {
