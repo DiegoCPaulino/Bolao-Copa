@@ -27,7 +27,10 @@ export type PerfilParticipante = {
   pagamento: {
     isento: boolean;
     valorAPagar: number | null; // null quando isento (fora do universo de cobrança)
-    status: StatusPagamento;
+    status: StatusPagamento; // a VERDADE (status real gravado) — o perfil não maquia
+    // Sinalizador CRU (§8.8): permite o perfil (visão interna) AVISAR que o participante
+    // aparece como pago só na exportação — nunca mostra "pago" puro no lugar da verdade.
+    exibirComoPago: boolean;
   };
   desempenho: {
     pontos: number;
@@ -82,9 +85,15 @@ async function montarPagamento(participante: {
   id: string;
   isento: boolean;
   status: StatusPagamento;
+  exibirComoPago: boolean;
 }): Promise<PerfilParticipante["pagamento"]> {
   if (participante.isento) {
-    return { isento: true, valorAPagar: null, status: participante.status };
+    return {
+      isento: true,
+      valorAPagar: null,
+      status: participante.status,
+      exibirComoPago: participante.exibirComoPago,
+    };
   }
   const { participantes } = await pagamentoService.listarPagamentos();
   const linha = participantes.find((p) => p.id === participante.id);
@@ -92,6 +101,7 @@ async function montarPagamento(participante: {
     isento: false,
     valorAPagar: linha?.valorAPagar ?? null,
     status: participante.status,
+    exibirComoPago: participante.exibirComoPago,
   };
 }
 

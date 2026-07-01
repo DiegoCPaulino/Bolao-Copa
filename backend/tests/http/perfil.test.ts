@@ -87,7 +87,12 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
     expect(perfil.indicacoes.indicados[0]).toMatchObject({ id: carla.id, nome: "Carla" });
 
     // Bloco 3 — pagamento: 1 indicado direto → 40 − 5 = 35; status padrão PENDENTE.
-    expect(perfil.pagamento).toEqual({ isento: false, valorAPagar: 35, status: "PENDENTE" });
+    expect(perfil.pagamento).toEqual({
+      isento: false,
+      valorAPagar: 35,
+      status: "PENDENTE",
+      exibirComoPago: false,
+    });
 
     // Bloco 4 — desempenho: total 3, líder (posição 1 de 3), breakdown por rodada.
     expect(perfil.desempenho).toMatchObject({
@@ -107,7 +112,12 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
     const p = await prisma.participante.create({ data: { nome: "Isento", isento: true } });
     const resp = await get(`/participantes/${p.id}/perfil`);
     expect(resp.statusCode).toBe(200);
-    expect(resp.json().pagamento).toEqual({ isento: true, valorAPagar: null, status: "PENDENTE" });
+    expect(resp.json().pagamento).toEqual({
+      isento: true,
+      valorAPagar: null,
+      status: "PENDENTE",
+      exibirComoPago: false,
+    });
   });
 
   it("404 id inexistente", async () => {

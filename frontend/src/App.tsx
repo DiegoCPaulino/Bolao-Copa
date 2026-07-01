@@ -7,6 +7,7 @@ import { Login } from "@/pages/Login";
 import { Pagamentos } from "@/pages/Pagamentos";
 import { Painel } from "@/pages/Painel";
 import { Participantes } from "@/pages/Participantes";
+import { Perfil } from "@/pages/Perfil";
 import { RodadaDetalhe } from "@/pages/RodadaDetalhe";
 import { Rodadas } from "@/pages/Rodadas";
 
@@ -25,6 +26,7 @@ export function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<Painel />} />
               <Route path="/participantes" element={<Participantes />} />
+              <Route path="/participantes/:id" element={<Perfil />} />
               <Route path="/pagamentos" element={<Pagamentos />} />
               <Route path="/rodadas" element={<Rodadas />} />
               <Route path="/rodadas/:id" element={<RodadaDetalhe />} />

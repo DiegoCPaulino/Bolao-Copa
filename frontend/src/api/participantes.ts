@@ -1,4 +1,5 @@
 import { api } from "./client";
+import type { Fase } from "./rodadas";
 
 // Camada de API de Participantes — funções tipadas sobre as rotas existentes (6.3a).
 // Tudo passa pelo cliente central (credentials + 401 + ApiError herdados). A PÁGINA não
@@ -57,3 +58,42 @@ export const removerParticipante = (id: string) => api.del<void>(`/participantes
 
 /** GET /participantes/export → text/plain (§12.6). O texto vem PRONTO; o front só copia. */
 export const exportarParticipantes = () => api.getTexto("/participantes/export");
+
+/** Referência enxuta a um participante (indicador/indicados no perfil). */
+export type RefParticipante = { id: string; nome: string; apelido: string | null };
+
+/**
+ * Perfil consolidado (§12.4) — o back JUNTA os 4 blocos e entrega DERIVADO numa chamada.
+ * A tela só EXIBE: nunca soma, nunca deriva indicados, nunca calcula posição/pontos.
+ */
+export type PerfilParticipante = {
+  participante: RefParticipante;
+  indicacoes: {
+    indicador: RefParticipante | null;
+    indicados: RefParticipante[];
+  };
+  pagamento: {
+    isento: boolean;
+    valorAPagar: number | null; // null quando isento
+    status: StatusPagamento; // a VERDADE (status real) — o perfil não maquia
+    exibirComoPago: boolean; // sinalizador cru: perfil AVISA (🎭), nunca mostra "pago" puro
+  };
+  desempenho: {
+    pontos: number;
+    placaresExatos: number;
+    resultadosCertos: number;
+    posicao: number;
+    totalClassificados: number;
+    porRodada: {
+      rodadaId: string;
+      fase: Fase;
+      ordem: number;
+      pontos: number;
+      placaresExatos: number;
+      decidida: boolean; // false = rodada ainda sem resultado (≠ "jogou e zerou")
+    }[];
+  };
+};
+
+export const obterPerfil = (id: string) =>
+  api.get<PerfilParticipante>(`/participantes/${id}/perfil`);

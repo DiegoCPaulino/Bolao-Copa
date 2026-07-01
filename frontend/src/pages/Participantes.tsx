@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { VenetianMask } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ApiError } from "@/api/client";
@@ -57,6 +58,8 @@ export function Participantes() {
   const [formAberto, setFormAberto] = useState(false);
   const [removendo, setRemovendo] = useState<Participante | null>(null);
   const [textoExport, setTextoExport] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   async function recarregar() {
     setCarregando(true);
@@ -194,7 +197,12 @@ export function Participantes() {
                 </TableRow>
               ) : (
                 visiveis.map((p) => (
-                  <TableRow key={p.id}>
+                  // A linha abre o PERFIL. Os botões de Ações param a propagação (não navegam).
+                  <TableRow
+                    key={p.id}
+                    onClick={() => navigate(`/participantes/${p.id}`)}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
                     <TableCell className="font-medium">{p.nome}</TableCell>
                     <TableCell className="text-muted-foreground">{p.apelido ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -230,14 +238,22 @@ export function Participantes() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditando(p);
                             setFormAberto(true);
                           }}
                         >
                           Editar
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setRemovendo(p)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRemovendo(p);
+                          }}
+                        >
                           Remover
                         </Button>
                       </div>
