@@ -35,7 +35,9 @@ export type PerfilParticipante = {
   desempenho: {
     pontos: number;
     placaresExatos: number;
-    resultadosCertos: number;
+    resultadosCertos: number; // ≥1 (inclui exatos) — vivo p/ a cascata; telas não exibem
+    empatesAcertados: number;
+    vitoriasAcertadas: number;
     posicao: number;
     totalClassificados: number;
     porRodada: {
@@ -44,6 +46,8 @@ export type PerfilParticipante = {
       ordem: number;
       pontos: number;
       placaresExatos: number;
+      empatesAcertados: number;
+      vitoriasAcertadas: number;
       decidida: boolean;
     }[];
   };
@@ -119,6 +123,8 @@ async function montarDesempenho(participanteId: string): Promise<PerfilParticipa
     pontos: linha?.pontos ?? 0,
     placaresExatos: linha?.placaresExatos ?? 0,
     resultadosCertos: linha?.resultadosCertos ?? 0,
+    empatesAcertados: linha?.empatesAcertados ?? 0,
+    vitoriasAcertadas: linha?.vitoriasAcertadas ?? 0,
     posicao: indice + 1, // índice+1; -1+1 = 0 seria "não classificado" (não deve ocorrer)
     totalClassificados: classificacao.length,
     porRodada,

@@ -81,7 +81,9 @@ export type PerfilParticipante = {
   desempenho: {
     pontos: number;
     placaresExatos: number;
-    resultadosCertos: number;
+    resultadosCertos: number; // ≥1 (inclui exatos) — vivo no back p/ a cascata; a tela não exibe
+    empatesAcertados: number;
+    vitoriasAcertadas: number;
     posicao: number;
     totalClassificados: number;
     porRodada: {
@@ -90,6 +92,8 @@ export type PerfilParticipante = {
       ordem: number;
       pontos: number;
       placaresExatos: number;
+      empatesAcertados: number;
+      vitoriasAcertadas: number;
       decidida: boolean; // false = rodada ainda sem resultado (≠ "jogou e zerou")
     }[];
   };

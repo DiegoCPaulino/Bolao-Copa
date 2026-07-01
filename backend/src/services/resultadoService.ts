@@ -34,7 +34,10 @@ export type LinhaPontuacao = {
   apelido: string | null;
   pontos: number;
   placaresExatos: number;
-  resultadosCertos: number;
+  resultadosCertos: number; // ≥1 (inclui exatos) — vivo p/ a cascata §8.5, não some
+  // Split estatístico dos de 1 ponto (exato fora): resultadosCertos = exatos + os dois.
+  empatesAcertados: number;
+  vitoriasAcertadas: number;
 };
 
 /**
@@ -48,6 +51,8 @@ export type DesempenhoRodada = {
   ordem: number;
   pontos: number;
   placaresExatos: number;
+  empatesAcertados: number;
+  vitoriasAcertadas: number;
   decidida: boolean;
 };
 
@@ -131,6 +136,8 @@ export async function desempenhoPorRodada(participanteId: string): Promise<Desem
       ordem: rodada.ordem,
       pontos: linha?.pontos ?? 0,
       placaresExatos: linha?.placaresExatos ?? 0,
+      empatesAcertados: linha?.empatesAcertados ?? 0,
+      vitoriasAcertadas: linha?.vitoriasAcertadas ?? 0,
       decidida,
     });
   }

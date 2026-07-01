@@ -17,7 +17,10 @@ export type LinhaPontuacao = {
   apelido: string | null;
   pontos: number;
   placaresExatos: number;
-  resultadosCertos: number;
+  resultadosCertos: number; // ≥1 (inclui exatos) — vivo no back p/ a cascata; a tela não exibe
+  // Split estatístico dos de 1 ponto (exato fora) — é o que a tabela mostra.
+  empatesAcertados: number;
+  vitoriasAcertadas: number;
 };
 
 /** Um palpite no resumo do jogo, com os pontos JÁ calculados no back. */

@@ -15,6 +15,11 @@ function rotulo(p: { nome: string; apelido: string | null }): string {
   return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
 }
 
+/** Pluralização pt-BR simples para o split por rodada (ex.: "1 empate" / "2 empates"). */
+function plural(n: number, singular: string, plural: string): string {
+  return `${n} ${n === 1 ? singular : plural}`;
+}
+
 /** Link para o perfil de outro participante — a rede de indicações é navegável. */
 function LinkParticipante({ p }: { p: RefParticipante }) {
   return (
@@ -138,11 +143,14 @@ export function Perfil() {
       {/* DESEMPENHO — destaque (StatCards) + breakdown por rodada. Tudo vem pronto do back. */}
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Desempenho</h2>
+        {/* "Resultados certos" é subdividido em empates e vitórias acertados (só relatório;
+            os pontos não mudam). Não exibimos o total "certos" — seria a soma dos três. */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard titulo="Posição" valor={`${desempenho.posicao}º de ${desempenho.totalClassificados}`} />
           <StatCard titulo="Pontos" valor={String(desempenho.pontos)} tom="success" />
           <StatCard titulo="Placares exatos" valor={String(desempenho.placaresExatos)} />
-          <StatCard titulo="Resultados certos" valor={String(desempenho.resultadosCertos)} />
+          <StatCard titulo="Empates certos" valor={String(desempenho.empatesAcertados)} />
+          <StatCard titulo="Vitórias certas" valor={String(desempenho.vitoriasAcertadas)} />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -165,7 +173,16 @@ export function Perfil() {
                     {FASE_LABEL[r.fase]}
                   </p>
                   {r.decidida ? (
-                    <p className="font-display text-lg font-bold tabular-nums">{r.pontos} pts</p>
+                    <>
+                      <p className="font-display text-lg font-bold tabular-nums">{r.pontos} pts</p>
+                      {/* Split do "certo" da rodada (só quando houve algum). */}
+                      {r.empatesAcertados + r.vitoriasAcertadas > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {plural(r.empatesAcertados, "empate", "empates")} ·{" "}
+                          {plural(r.vitoriasAcertadas, "vitória", "vitórias")}
+                        </p>
+                      )}
+                    </>
                   ) : (
                     // decidida:false ≠ "fez 0" — visual muted/tracejado, sem número.
                     <p className="text-sm italic text-muted-foreground">aguardando</p>

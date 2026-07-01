@@ -56,3 +56,30 @@ export function calcularPontos(palpite: Placar, resultado: Placar): Pontos {
 
   return 0;
 }
+
+/**
+ * Categoria ESTATÍSTICA de um palpite (fatia #3) — subdivide o "resultado certo" para
+ * RELATÓRIO nas telas, sem tocar nos pontos:
+ *
+ * - `EXATO` (3 pts) — categoria própria; NÃO conta como empate/vitória;
+ * - `EMPATE_ACERTADO` (1 pt) — acertou o empate, placar errado;
+ * - `VITORIA_ACERTADA` (1 pt) — acertou o vencedor, placar errado;
+ * - `ERRADO` (0).
+ *
+ * Função PURA, construída SOBRE `calcularPontos` (fonte única do 3/1/0 — não duplica a
+ * regra): só ADICIONA a distinção empate/vitória no caso de 1 ponto, pelo desfecho do
+ * resultado real. Os pontos seguem intactos (§8.2/§8.3) e a cascata §8.5 também.
+ */
+export type CategoriaPalpite = "EXATO" | "EMPATE_ACERTADO" | "VITORIA_ACERTADA" | "ERRADO";
+
+export function classificarPalpite(palpite: Placar, resultado: Placar): CategoriaPalpite {
+  const ponto = calcularPontos(palpite, resultado);
+  if (ponto === 3) {
+    return "EXATO";
+  }
+  if (ponto === 0) {
+    return "ERRADO";
+  }
+  // ponto === 1: acertou o desfecho — empate se o resultado REAL foi empate, senão vitória.
+  return desfecho(resultado) === 0 ? "EMPATE_ACERTADO" : "VITORIA_ACERTADA";
+}

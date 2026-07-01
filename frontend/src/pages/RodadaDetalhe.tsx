@@ -557,7 +557,13 @@ export function RodadaDetalhe() {
                     <th className="py-1 pr-2 font-medium">Participante</th>
                     <th className="py-1 px-2 text-right font-medium">Pts</th>
                     <th className="py-1 px-2 text-right font-medium">Exatos</th>
-                    <th className="py-1 pl-2 text-right font-medium">Certos</th>
+                    {/* Split do "resultado certo" (1 pt): empates e vitórias acertados. */}
+                    <th className="py-1 px-2 text-right font-medium" title="Empates acertados (placar errado)">
+                      Emp.
+                    </th>
+                    <th className="py-1 pl-2 text-right font-medium" title="Vitórias acertadas (placar errado)">
+                      Vit.
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -567,7 +573,8 @@ export function RodadaDetalhe() {
                       <td className="py-1 pr-2">{rotuloParticipante(l)}</td>
                       <td className="py-1 px-2 text-right font-medium">{l.pontos}</td>
                       <td className="py-1 px-2 text-right">{l.placaresExatos}</td>
-                      <td className="py-1 pl-2 text-right">{l.resultadosCertos}</td>
+                      <td className="py-1 px-2 text-right">{l.empatesAcertados}</td>
+                      <td className="py-1 pl-2 text-right">{l.vitoriasAcertadas}</td>
                     </tr>
                   ))}
                 </tbody>
