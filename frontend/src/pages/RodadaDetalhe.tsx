@@ -12,6 +12,7 @@ import type { Jogo, RodadaDetalhada } from "@/api/rodadas";
 import * as resultadosApi from "@/api/resultados";
 import type { LinhaPontuacao, ResumoJogo } from "@/api/resultados";
 import { Combobox } from "@/components/Combobox";
+import { Confronto } from "@/components/Confronto";
 import { CopiarWhatsApp } from "@/components/CopiarWhatsApp";
 import { ESTADOS_ORDEM, EstadoBadge, FASE_LABEL } from "@/components/rodada/labels";
 import { Button } from "@/components/ui/button";
@@ -412,8 +413,7 @@ export function RodadaDetalhe() {
                   <div key={j.id} className="flex flex-col gap-2 rounded-xl border bg-card p-3 shadow-sm">
                     <span className="text-sm">
                       <span className="text-muted-foreground">⚽ J{j.ordem}</span>{" "}
-                      {j.selecaoEsquerda.bandeira} {j.selecaoEsquerda.nome} ×{" "}
-                      {j.selecaoDireita.nome} {j.selecaoDireita.bandeira}
+                      <Confronto esquerda={j.selecaoEsquerda} direita={j.selecaoDireita} />
                     </span>
                     <div className="flex flex-wrap items-center gap-2">
                       <Input
@@ -475,8 +475,7 @@ export function RodadaDetalhe() {
                 <div key={j.id} className="flex flex-col gap-2 rounded-xl border bg-card p-3 shadow-sm">
                   <span className="text-sm">
                     <span className="text-muted-foreground">⚽ J{j.ordem}</span>{" "}
-                    {j.selecaoEsquerda.bandeira} {j.selecaoEsquerda.nome} ×{" "}
-                    {j.selecaoDireita.nome} {j.selecaoDireita.bandeira}
+                    <Confronto esquerda={j.selecaoEsquerda} direita={j.selecaoDireita} />
                     {lancado && (
                       <span className="ml-1 font-medium">
                         — {j.golsEsquerdaReal}×{j.golsDireitaReal}
@@ -589,8 +588,7 @@ export function RodadaDetalhe() {
                 const cabecalho = (
                   <span className="text-sm">
                     <span className="text-muted-foreground">⚽ J{j.ordem}</span>{" "}
-                    {j.selecaoEsquerda.bandeira} {j.selecaoEsquerda.nome} ×{" "}
-                    {j.selecaoDireita.nome} {j.selecaoDireita.bandeira}
+                    <Confronto esquerda={j.selecaoEsquerda} direita={j.selecaoDireita} />
                   </span>
                 );
                 if (!temPlacar(j)) {

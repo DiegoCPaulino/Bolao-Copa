@@ -1,6 +1,7 @@
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Selecao } from "@/api/selecoes";
+import { SelecaoLabel } from "@/components/Confronto";
 import { cn } from "@/lib/utils";
 
 /**
@@ -71,7 +72,7 @@ export function ComboboxSelecao({
         className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         <span className={cn("truncate", !escolhida && "text-muted-foreground")}>
-          {escolhida ? `${escolhida.bandeira} ${escolhida.nome}` : placeholder}
+          {escolhida ? <SelecaoLabel selecao={escolhida} /> : placeholder}
         </span>
         <ChevronsUpDown className="size-4 shrink-0 opacity-50" aria-hidden />
       </button>
@@ -97,9 +98,7 @@ export function ComboboxSelecao({
                   onClick={() => escolher(s.id)}
                   className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
                 >
-                  <span className="flex-1 truncate">
-                    {s.bandeira} {s.nome}
-                  </span>
+                  <SelecaoLabel selecao={s} className="flex-1 truncate" />
                   {s.id === value && <Check className="size-4 shrink-0 text-primary" aria-hidden />}
                 </button>
               ))

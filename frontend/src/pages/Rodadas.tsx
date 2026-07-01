@@ -8,6 +8,7 @@ import type { Fase, Jogo, RodadaDetalhada, RodadaResumo } from "@/api/rodadas";
 import { listarSelecoes } from "@/api/selecoes";
 import type { Selecao } from "@/api/selecoes";
 import { ComboboxSelecao } from "@/components/ComboboxSelecao";
+import { Confronto } from "@/components/Confronto";
 import { CopiarWhatsApp } from "@/components/CopiarWhatsApp";
 import { EstadoBadge, FASE_LABEL, FASES } from "@/components/rodada/labels";
 import { Button } from "@/components/ui/button";
@@ -299,8 +300,8 @@ function DrawerRodada({
           ) : (
             <div key={j.id} className="flex items-center justify-between gap-2 rounded-lg border p-3">
               <span className="truncate text-sm">
-                <span className="text-muted-foreground">J{j.ordem}</span> {j.selecaoEsquerda.bandeira}{" "}
-                {j.selecaoEsquerda.nome} × {j.selecaoDireita.nome} {j.selecaoDireita.bandeira}
+                <span className="text-muted-foreground">J{j.ordem}</span>{" "}
+                <Confronto esquerda={j.selecaoEsquerda} direita={j.selecaoDireita} />
               </span>
               <div className="flex shrink-0 gap-1">
                 <Button variant="ghost" size="icon" aria-label={`Editar jogo ${j.ordem}`} onClick={() => iniciarEdicao(j)}>
