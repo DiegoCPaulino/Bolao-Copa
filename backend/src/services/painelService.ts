@@ -26,6 +26,7 @@ export type ResumoPagamentos = {
 };
 
 export type ResumoRodadaAtual = {
+  id: string;
   fase: FaseRodada;
   ordem: number;
   estado: EstadoRodada;
@@ -66,6 +67,7 @@ async function resumirRodadaAtual(totalParticipantes: number): Promise<ResumoRod
   // "Palpitou" = tem ao menos um palpite na rodada (pendentes = zero palpites).
   const pendentes = await palpiteService.participantesPendentes(atual.id);
   return {
+    id: atual.id, // o back JÁ escolheu a rodada; expõe o id p/ o Painel atalhar sem lookup
     fase: atual.fase,
     ordem: atual.ordem,
     estado: atual.estado,

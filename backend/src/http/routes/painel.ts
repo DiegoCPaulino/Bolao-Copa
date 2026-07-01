@@ -13,6 +13,11 @@ const TEXTO_PLANO = "text/plain; charset=utf-8";
 export async function rotasPainel(app: FastifyInstance): Promise<void> {
   app.get("/painel", async () => painel.gerarResumo());
 
+  // Classificação geral em JSON (para o TOP 3 do Painel): já ordenada pela cascata no
+  // serviço; a tela só EXIBE (não reordena). Complementa o export §12.5 abaixo, que
+  // continua servindo o text/plain para o grupo.
+  app.get("/classificacao", async () => resultados.classificacaoGeral());
+
   app.get("/classificacao/export", async (_req, reply) => {
     const linhas = await resultados.classificacaoGeral();
     const texto = formatarClassificacaoGeral(
