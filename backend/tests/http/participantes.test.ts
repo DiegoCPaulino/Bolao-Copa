@@ -134,6 +134,8 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("text/plain");
     expect(res.body).toContain("👥 *PARTICIPANTES (2)*");
-    expect(res.body).toContain("Ana, Bruno");
+    // Lista numerada em ordem alfabética (§13.6).
+    expect(res.body).toContain("1. Ana");
+    expect(res.body).toContain("2. Bruno");
   });
 });

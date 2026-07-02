@@ -313,18 +313,26 @@ _(sem palpites ainda)_
 
 **13.5 Classificação geral**
 ```
-📊 *CLASSIFICAÇÃO GERAL* (após as Oitavas)
+📊 *CLASSIFICAÇÃO GERAL*
 
-1º  Diego — 21 pts
-2º  Lucas — 18 pts
-3º  Ana   — 15 pts
+🥇 Diego — 21 pts
+🥈 Lucas — 18 pts
+🥉 Ana — 15 pts
+4º João — 12 pts
 ```
+> Pódio com medalhas nas 3 primeiras posições (🥇🥈🥉), numeração normal da 4ª em
+> diante. As medalhas seguem a ordem da classificação (cascata §8.5) — o formatador
+> não reordena. Título sem contexto entre parênteses.
 
 **13.6 Lista de participantes**
 ```
 👥 *PARTICIPANTES (63)*
-Diego, Lucas, Ana, João, Pedro, ...
+1. Ana
+2. Diego
+3. João
 ```
+> Lista numerada em ordem alfabética (apelido como critério secundário, para
+> homônimos). A contagem no título é mantida.
 
 **13.7 Pagamentos**
 ```

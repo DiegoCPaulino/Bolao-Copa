@@ -131,7 +131,6 @@ async function exportarClassificacao(): Promise<void> {
   // Formatador puro §12.5: a lista já vem ordenada pela cascata de desempate.
   const texto = formatarClassificacaoGeral(
     linhas.map((l) => ({ nome: l.nome, apelido: l.apelido ?? undefined, pontos: l.pontos })),
-    "classificação atual",
   );
   console.log(`\n${texto}\n`);
 }

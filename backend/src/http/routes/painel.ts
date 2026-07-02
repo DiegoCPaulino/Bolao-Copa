@@ -22,7 +22,6 @@ export async function rotasPainel(app: FastifyInstance): Promise<void> {
     const linhas = await resultados.classificacaoGeral();
     const texto = formatarClassificacaoGeral(
       linhas.map((l) => ({ nome: l.nome, apelido: l.apelido ?? undefined, pontos: l.pontos })),
-      "classificação atual",
     );
     return reply.type(TEXTO_PLANO).send(texto);
   });
