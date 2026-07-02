@@ -38,3 +38,9 @@ export const exportarPendencias = (rodadaId: string) =>
   api.getTexto(`/rodadas/${rodadaId}/export/pendencias`);
 export const exportarTabela = (rodadaId: string) =>
   api.getTexto(`/rodadas/${rodadaId}/export/tabela`);
+
+/** Variantes POR JOGO (§13.2/§13.8) — coexistem com as por-rodada; o back monta o texto. */
+export const exportarTabelaJogo = (jogoId: string) =>
+  api.getTexto(`/jogos/${jogoId}/export/tabela`);
+export const exportarPendenciasJogo = (jogoId: string) =>
+  api.getTexto(`/jogos/${jogoId}/export/pendencias`);

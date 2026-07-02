@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Copy, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -381,6 +381,40 @@ export function RodadaDetalhe() {
               <p className="mt-1 text-sm">{pendentes.map(rotuloParticipante).join(", ")}</p>
             )}
           </div>
+
+          {/* Copiar POR JOGO (§13.2/§13.8) — artefato da RODADA, sempre visível (independe do
+              participante). Os botões gerais da rodada seguem no topo; estes são adição. */}
+          {rodada.jogos.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-sm">
+              <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                Copiar por jogo
+              </h2>
+              {rodada.jogos.map((j) => (
+                <div key={j.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm">
+                    <span className="text-muted-foreground">⚽ J{j.ordem}</span>{" "}
+                    <Confronto esquerda={j.selecaoEsquerda} direita={j.selecaoDireita} />
+                  </span>
+                  <div className="flex shrink-0 gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void copiar(() => palpitesApi.exportarTabelaJogo(j.id))}
+                    >
+                      <Copy className="size-3.5" aria-hidden /> Tabela
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void copiar(() => palpitesApi.exportarPendenciasJogo(j.id))}
+                    >
+                      <Copy className="size-3.5" aria-hidden /> Pendências
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Registrar palpite jogo a jogo, por participante */}
           <div className="flex flex-col gap-2">

@@ -38,6 +38,18 @@ describe("participantesSemPalpite (funcional §8.4, §12.8)", () => {
     expect(ids(participantesSemPalpite(jogosDaRodada, [part("A")], palpites))).toEqual(["A"]);
   });
 
+  it("POR JOGO (jogoIds=[X]): quem palpitou OUTRO jogo, mas não o X, falta em X", () => {
+    // A palpitou só j1; B palpitou só j2. Analisando SÓ j1, B é pendente de j1
+    // (mesmo tendo palpitado a rodada) — a diferença-chave vs. o binário por-rodada.
+    const participantes = [part("A"), part("B")];
+    const palpites = [
+      { participanteId: "A", jogoId: "j1" },
+      { participanteId: "B", jogoId: "j2" },
+    ];
+    expect(ids(participantesSemPalpite(["j1"], participantes, palpites))).toEqual(["B"]);
+    expect(ids(participantesSemPalpite(["j2"], participantes, palpites))).toEqual(["A"]);
+  });
+
   it("caso misto", () => {
     const participantes = [part("A"), part("B"), part("C"), part("D")];
     const palpites = [

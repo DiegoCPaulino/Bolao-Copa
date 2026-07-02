@@ -291,6 +291,8 @@ Diego 2x1
 ⚽ *J2* 🇫🇷 França × Espanha 🇪🇸
 _(sem palpites ainda)_
 ```
+> Variante **por jogo** (coexiste com a da rodada): mesmo formato com um único bloco,
+> título identificando o confronto (ex.: `PALPITES — OITAVAS, J3 🇧🇷 Brasil × Argentina 🇦🇷`).
 
 **13.3 Resumo do jogo**
 ```
@@ -361,6 +363,9 @@ _(sem palpites ainda)_
 • Pedro
 Mandem antes dos jogos! ⏰
 ```
+> Variante **por jogo** (coexiste com a da rodada): "quem não palpitou ESTE jogo"
+> (não o binário da rodada — quem palpitou outro jogo, mas não este, aparece aqui). O
+> título identifica o confronto (ex.: `FALTAM PALPITES — J3 🇧🇷 Brasil × Argentina 🇦🇷`).
 
 ## 14. Modelo conceitual (entidades) — visão não técnica
 

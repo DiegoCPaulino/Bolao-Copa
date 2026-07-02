@@ -94,4 +94,38 @@ export async function rotasPalpites(app: FastifyInstance): Promise<void> {
     );
     return reply.type(TEXTO_PLANO).send(texto);
   });
+
+  // — variantes POR JOGO (§13.2/§13.8) — ADIÇÃO; as por-rodada acima ficam intactas —
+
+  app.get("/jogos/:id/export/tabela", async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const { fase, jogo, linhas } = await palpitesService.dadosTabelaJogo(id); // JogoNaoEncontrado → 404
+    // Título IDENTIFICA o jogo (fase + J{n} + confronto). O formatador aceita label livre;
+    // recebe só ESTE jogo (ele filtra os palpites pela ordem) → sai um bloco único.
+    const rotulo = `${FASE_LABEL[fase].toUpperCase()}, J${jogo.ordem} ${jogo.esquerda.bandeira} ${jogo.esquerda.nome} × ${jogo.direita.nome} ${jogo.direita.bandeira}`;
+    const texto = formatarTabelaPalpites(
+      [{ ordem: jogo.ordem, esquerda: jogo.esquerda, direita: jogo.direita }],
+      linhas.map((l) => ({
+        nome: l.nome,
+        apelido: l.apelido ?? undefined,
+        palpites: l.palpites.map((p) => ({
+          jogo: p.jogoOrdem,
+          placar: { golsEsquerda: p.golsEsquerda, golsDireita: p.golsDireita },
+        })),
+      })),
+      rotulo,
+    );
+    return reply.type(TEXTO_PLANO).send(texto);
+  });
+
+  app.get("/jogos/:id/export/pendencias", async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const { jogo, pendentes } = await palpitesService.participantesPendentesDoJogo(id); // 404 se não existe
+    const rotulo = `J${jogo.ordem} ${jogo.esquerda.bandeira} ${jogo.esquerda.nome} × ${jogo.direita.nome} ${jogo.direita.bandeira}`;
+    const texto = formatarPendencias(
+      pendentes.map((p) => ({ nome: p.nome, apelido: p.apelido ?? undefined })),
+      rotulo,
+    );
+    return reply.type(TEXTO_PLANO).send(texto);
+  });
 }

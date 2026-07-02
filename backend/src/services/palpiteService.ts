@@ -1,5 +1,6 @@
 import {
   JogoForaDaRodada,
+  JogoNaoEncontrado,
   PalpiteInvalido,
   ParticipanteNaoEncontrado,
   RodadaNaoEncontrada,
@@ -9,6 +10,7 @@ import type { Palpite } from "../repositories/palpiteRepository.js";
 import * as palpiteRepo from "../repositories/palpiteRepository.js";
 import type { Participante } from "../repositories/participanteRepository.js";
 import * as participanteRepo from "../repositories/participanteRepository.js";
+import type { FaseRodada, JogoComPalpites } from "../repositories/rodadaRepository.js";
 import * as rodadaRepo from "../repositories/rodadaRepository.js";
 
 /**
@@ -32,6 +34,21 @@ export type LinhaPalpiteParticipante = {
   apelido: string | null;
   palpites: { jogoOrdem: number; golsEsquerda: number; golsDireita: number }[];
 };
+
+/** Cabeçalho de um jogo (ordem + os dois lados) — insumo do rótulo dos exports por-jogo. */
+export type CabecalhoJogo = {
+  ordem: number;
+  esquerda: { nome: string; bandeira: string };
+  direita: { nome: string; bandeira: string };
+};
+
+function cabecalhoDoJogo(jogo: JogoComPalpites): CabecalhoJogo {
+  return {
+    ordem: jogo.ordem,
+    esquerda: { nome: jogo.selecaoEsquerda.nome, bandeira: jogo.selecaoEsquerda.bandeira },
+    direita: { nome: jogo.selecaoDireita.nome, bandeira: jogo.selecaoDireita.bandeira },
+  };
+}
 
 /**
  * Registra os palpites de um participante numa rodada — UPSERT por jogo: cria se é o
@@ -144,6 +161,51 @@ export async function dadosTabelaPalpites(rodadaId: string): Promise<LinhaPalpit
     });
   }
   return [...porParticipante.values()];
+}
+
+/**
+ * Dados da tabela de palpites de UM jogo (§13.2, variante por-jogo). Orquestração fina:
+ * acha a rodada do jogo e REUSA `dadosTabelaPalpites` (as linhas já vêm marcadas por
+ * `jogoOrdem`; o formatador filtra o jogo). Devolve fase + cabeçalho do jogo para o
+ * adaptador montar o rótulo. Sem regra nova. 404 se o jogo não existe.
+ */
+export async function dadosTabelaJogo(
+  jogoId: string,
+): Promise<{ fase: FaseRodada; jogo: CabecalhoJogo; linhas: LinhaPalpiteParticipante[] }> {
+  const jogo = await rodadaRepo.buscarJogoComPalpites(jogoId);
+  if (!jogo) {
+    throw new JogoNaoEncontrado(jogoId);
+  }
+  const rodada = await rodadaRepo.buscarPorId(jogo.rodadaId);
+  if (!rodada) {
+    throw new RodadaNaoEncontrada(jogo.rodadaId); // defensivo (FK garante a rodada)
+  }
+  const linhas = await dadosTabelaPalpites(jogo.rodadaId);
+  return { fase: rodada.fase, jogo: cabecalhoDoJogo(jogo), linhas };
+}
+
+/**
+ * Quem NÃO palpitou UM jogo específico (§13.8, variante por-jogo). REUSA a MESMA pura
+ * `participantesSemPalpite`, apenas trocando o universo de jogos para `[jogoId]` — a
+ * regra binária não é reescrita; muda só o argumento. Devolve o cabeçalho do jogo para
+ * o rótulo. 404 se o jogo não existe.
+ */
+export async function participantesPendentesDoJogo(
+  jogoId: string,
+): Promise<{ jogo: CabecalhoJogo; pendentes: Participante[] }> {
+  const jogo = await rodadaRepo.buscarJogoComPalpites(jogoId);
+  if (!jogo) {
+    throw new JogoNaoEncontrado(jogoId);
+  }
+  const participantes = await participanteRepo.listarTodos();
+  const vinculos = jogo.palpites.map((p) => ({
+    participanteId: p.participanteId,
+    jogoId: p.jogoId,
+  }));
+  return {
+    jogo: cabecalhoDoJogo(jogo),
+    pendentes: participantesSemPalpite([jogoId], participantes, vinculos),
+  };
 }
 
 /**
