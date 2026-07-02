@@ -24,15 +24,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { rotuloParticipante } from "@/lib/formato";
 
 // Sentinelas: Radix Select não aceita value vazio, então "Nenhum"/"Todos" usam tokens.
 const NENHUM = "__nenhum__";
 const TODOS = "__todos__";
-
-/** Rótulo de exibição: nome + apelido entre aspas, se houver. */
-function rotulo(p: { nome: string; apelido: string | null }): string {
-  return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
-}
 
 // Validação de FORMA no cliente (espelha o participanteInputSchema do back, que valida de
 // verdade). O front NÃO reimplementa regra de negócio — só valida o formulário (§3.1).
@@ -212,7 +208,7 @@ export function Participantes() {
                     <TableCell className="font-medium">{p.nome}</TableCell>
                     <TableCell className="text-muted-foreground">{p.apelido ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {p.indicador ? rotulo(p.indicador) : "—"}
+                      {p.indicador ? rotuloParticipante(p.indicador) : "—"}
                     </TableCell>
                     <TableCell>
                       {/* Visão INTERNA mostra a VERDADE: o badge é sempre o status REAL.
@@ -299,7 +295,7 @@ export function Participantes() {
           <DialogHeader>
             <DialogTitle>Remover participante</DialogTitle>
             <DialogDescription>
-              Remover <strong>{removendo ? rotulo(removendo) : ""}</strong>? Se ele indicou
+              Remover <strong>{removendo ? rotuloParticipante(removendo) : ""}</strong>? Se ele indicou
               outras pessoas, elas NÃO são apagadas — apenas deixam de constar como indicadas
               por ele.
             </DialogDescription>
@@ -414,7 +410,7 @@ function FormParticipante({
                 <SelectItem value={NENHUM}>Nenhum</SelectItem>
                 {candidatosValidos.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {rotulo(c)}
+                    {rotuloParticipante(c)}
                   </SelectItem>
                 ))}
               </SelectContent>

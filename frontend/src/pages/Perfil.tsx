@@ -7,13 +7,8 @@ import type { PerfilParticipante, RefParticipante } from "@/api/participantes";
 import { FASE_LABEL } from "@/components/rodada/labels";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { reais } from "@/lib/formato";
+import { reais, rotuloParticipante } from "@/lib/formato";
 import { cn } from "@/lib/utils";
-
-/** Rótulo: nome + apelido entre aspas, se houver. */
-function rotulo(p: { nome: string; apelido: string | null }): string {
-  return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
-}
 
 /** Pluralização pt-BR simples para o split por rodada (ex.: "1 empate" / "2 empates"). */
 function plural(n: number, singular: string, plural: string): string {
@@ -24,7 +19,7 @@ function plural(n: number, singular: string, plural: string): string {
 function LinkParticipante({ p }: { p: RefParticipante }) {
   return (
     <Link to={`/participantes/${p.id}`} className="text-primary underline-offset-2 hover:underline">
-      {rotulo(p)}
+      {rotuloParticipante(p)}
     </Link>
   );
 }

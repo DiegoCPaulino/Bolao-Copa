@@ -20,12 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { reais } from "@/lib/formato";
-
-/** Rótulo: nome + apelido entre aspas, se houver. */
-function rotulo(p: { nome: string; apelido: string | null }): string {
-  return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
-}
+import { reais, rotuloParticipante } from "@/lib/formato";
 
 const ATALHOS = [
   { para: "/participantes", titulo: "Participantes", descricao: "Cadastro, apelidos e indicações" },
@@ -193,7 +188,7 @@ export function Painel() {
                   <span className="mr-2 font-display font-bold tabular-nums text-muted-foreground">
                     {i + 1}º
                   </span>
-                  {rotulo(l)}
+                  {rotuloParticipante(l)}
                 </span>
                 <span className="font-medium tabular-nums">{l.pontos} pts</span>
               </div>

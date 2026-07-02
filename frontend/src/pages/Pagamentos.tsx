@@ -19,15 +19,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { reais } from "@/lib/formato";
+import { reais, rotuloParticipante } from "@/lib/formato";
 
 // Sentinela: Radix Select não aceita value vazio, então "Todos" usa um token.
 const TODOS = "__todos__";
-
-/** Rótulo de exibição: nome + apelido entre aspas, se houver. */
-function rotulo(p: { nome: string; apelido: string | null }): string {
-  return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
-}
 
 const TOTAIS_VAZIO: TotaisPagamento = { esperado: 0, recebido: 0, falta: 0 };
 
@@ -244,7 +239,7 @@ export function Pagamentos() {
                           variant="outline"
                           size="sm"
                           onClick={() => void alternar(p)}
-                          aria-label={`Marcar ${rotulo(p)} como ${alvo}`}
+                          aria-label={`Marcar ${rotuloParticipante(p)} como ${alvo}`}
                         >
                           {emVoo ? (
                             <>

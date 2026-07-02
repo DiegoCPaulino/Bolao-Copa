@@ -24,15 +24,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { rotuloParticipante } from "@/lib/formato";
 
 type Aba = "palpites" | "resultados" | "pontuacao";
 type Placar = { golsEsquerda: number; golsDireita: number };
 type Rascunho = { gE: string; gD: string };
-
-/** Rótulo: nome + apelido entre aspas, se houver. Aceita Participante e Pendente (só usa nome/apelido). */
-function rotuloParticipante(p: { nome: string; apelido: string | null }): string {
-  return p.apelido ? `${p.nome} "${p.apelido}"` : p.nome;
-}
 
 /** Um rascunho é válido se os dois placares são inteiros >= 0 (o back revalida). */
 function rascunhoValido(c: Rascunho | undefined): boolean {
