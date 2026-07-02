@@ -50,7 +50,7 @@ export function formatarTabelaPalpites(
   const partes: string[] = [`📋 ${negrito(`PALPITES — ${faseLabel}`)}`];
 
   for (const jogo of jogos) {
-    partes.push(""); // linha em branco separando os blocos de jogo
+    partes.push("");
     partes.push(
       `⚽ ${negrito(`J${jogo.ordem}`)} ${jogo.esquerda.bandeira} ${jogo.esquerda.nome} × ${jogo.direita.nome} ${jogo.direita.bandeira}`,
     );
