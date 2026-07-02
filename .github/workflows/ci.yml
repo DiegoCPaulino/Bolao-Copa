@@ -62,3 +62,36 @@ jobs:
       # FALHAR em vez de pular — nada de verde-falso por skip silencioso.
       - name: Testes (Vitest — suíte completa)
         run: npm test
+
+  # Job INDEPENDENTE do backend (paralelo): o front pode falhar sem o back e vice-versa,
+  # com diagnóstico separado. Valida o que só rodava local — foi a lacuna que deixou o
+  # typecheck vermelho passar na 8.7. Sem Postgres (não precisa) e sem env/secret: o build
+  # é estático (client.ts tem fallback para VITE_API_URL). Não há Biome no front (só back);
+  # adicionar lint ao front seria outra fatia.
+  frontend:
+    name: Frontend — typecheck, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configura Node
+        uses: actions/setup-node@v5
+        with:
+          # Fonte única da versão do Node: reusa o .nvmrc do backend (mesma major, 24).
+          node-version-file: backend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instala dependências
+        run: npm ci
+
+      # Passos separados de propósito: se falhar, fica claro se foi o TYPECHECK ou o BUILD.
+      - name: Typecheck (tsc -b)
+        run: npx tsc -b
+
+      - name: Build (vite)
+        run: npx vite build
