@@ -33,6 +33,9 @@ export type DadosParticipante = {
   // Exibir como pago no grupo (funcional §8.8): override de APRESENTAÇÃO, só na
   // exportação. Opcional como `isento`: ausente = false (o Zod do adaptador já resolve).
   exibirComoPago?: boolean;
+  // Override do valor a pagar (fatia #4): INPUT do organizador. Ausente/null = sem
+  // override (usa a fórmula). Substitui base/desconto/piso quando presente.
+  valorCustomizado?: number | null;
 };
 
 export type { Participante, ParticipanteComIndicador };
@@ -46,6 +49,7 @@ export async function criarParticipante(dados: DadosParticipante): Promise<Parti
     indicadorId: dados.indicadorId,
     isento: dados.isento ?? false,
     exibirComoPago: dados.exibirComoPago ?? false,
+    valorCustomizado: dados.valorCustomizado ?? null,
   });
 }
 
@@ -62,6 +66,7 @@ export async function atualizarParticipante(
     indicadorId: dados.indicadorId,
     isento: dados.isento ?? false,
     exibirComoPago: dados.exibirComoPago ?? false,
+    valorCustomizado: dados.valorCustomizado ?? null,
   });
 }
 

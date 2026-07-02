@@ -17,6 +17,8 @@ export type Participante = {
   // Override de APRESENTAÇÃO (funcional §8.8): `status` continua sendo a verdade; este
   // boolean só faz o participante aparecer como pago NA EXPORTAÇÃO do WhatsApp.
   exibirComoPago: boolean;
+  // Override do valor a pagar (fatia #4): INPUT. null = sem override (usa a fórmula).
+  valorCustomizado: number | null;
   indicadorId: string | null;
   criadoEm: string;
   indicador: { id: string; nome: string; apelido: string | null } | null;
@@ -29,6 +31,7 @@ export type DadosParticipante = {
   indicadorId?: string | null;
   isento?: boolean;
   exibirComoPago?: boolean;
+  valorCustomizado?: number | null;
 };
 
 /** Filtros server-side que a rota aceita. A tela 8.1 filtra CLIENT-SIDE (ver Participantes.tsx),
@@ -77,6 +80,7 @@ export type PerfilParticipante = {
     valorAPagar: number | null; // null quando isento
     status: StatusPagamento; // a VERDADE (status real) — o perfil não maquia
     exibirComoPago: boolean; // sinalizador cru: perfil AVISA (🎭), nunca mostra "pago" puro
+    valorCustomizado: number | null; // != null → valor manual (override); perfil marca ✎
   };
   desempenho: {
     pontos: number;

@@ -13,11 +13,13 @@ vi.mock("@inquirer/prompts", () => ({
   select: vi.fn(),
   input: vi.fn(),
   confirm: vi.fn(),
+  number: vi.fn(),
 }));
 
 const select = vi.mocked(prompts.select);
 const input = vi.mocked(prompts.input);
 const confirm = vi.mocked(prompts.confirm);
+const number = vi.mocked(prompts.number);
 
 const temBanco = await bancoDisponivel();
 
@@ -33,7 +35,8 @@ describe.skipIf(!temBanco)("menuParticipantes (CLI leve, com Postgres)", () => {
     // indicador não chega a perguntar (não há candidatos), então só há 2 inputs.
     select.mockResolvedValueOnce("cadastrar").mockResolvedValueOnce("voltar");
     input.mockResolvedValueOnce("Maria").mockResolvedValueOnce("");
-    confirm.mockResolvedValueOnce(false); // "Isento de pagamento?" → não
+    confirm.mockResolvedValueOnce(false).mockResolvedValueOnce(false); // isento? não; exibir como pago? não
+    number.mockResolvedValueOnce(undefined); // valor customizado → Enter vazio (usa a fórmula)
 
     await menuParticipantes();
 
@@ -41,6 +44,7 @@ describe.skipIf(!temBanco)("menuParticipantes (CLI leve, com Postgres)", () => {
     expect(todos.map((p) => p.nome)).toEqual(["Maria"]);
     expect(todos[0]?.status).toBe("PENDENTE");
     expect(todos[0]?.isento).toBe(false);
+    expect(todos[0]?.valorCustomizado).toBeNull(); // Enter vazio = sem override
   });
 
   it("remove pelo menu após confirmação", async () => {

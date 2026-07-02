@@ -27,6 +27,9 @@ export type DadosGravaveis = {
   // Override de APRESENTAÇÃO (funcional §8.8): é INPUT do organizador, por isso se
   // grava — não é derivado. Só afeta a EXPORTAÇÃO; `status` segue sendo a verdade.
   exibirComoPago: boolean;
+  // Override do VALOR a pagar (fatia #4): INPUT (o valor DIGITADO, não um derivado —
+  // §3.2). NULL = sem override (usa a fórmula). Substitui base/desconto/piso.
+  valorCustomizado: number | null;
 };
 
 /** Opções de listagem: busca/filtro/ordenação simples (funcional §9.1, item 2). */

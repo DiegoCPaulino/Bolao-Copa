@@ -92,6 +92,7 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
       valorAPagar: 35,
       status: "PENDENTE",
       exibirComoPago: false,
+      valorCustomizado: null, // sem override → veio da fórmula
     });
 
     // Bloco 4 — desempenho: total 3, líder (posição 1 de 3), breakdown por rodada.
@@ -109,14 +110,33 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
   });
 
   it("participante isento: valorAPagar null (fora do universo de cobrança)", async () => {
-    const p = await prisma.participante.create({ data: { nome: "Isento", isento: true } });
+    // isento + override: a precedência isento > override zera o valor (override ignorado).
+    const p = await prisma.participante.create({
+      data: { nome: "Isento", isento: true, valorCustomizado: 99 },
+    });
     const resp = await get(`/participantes/${p.id}/perfil`);
     expect(resp.statusCode).toBe(200);
     expect(resp.json().pagamento).toEqual({
       isento: true,
-      valorAPagar: null,
+      valorAPagar: null, // isento vence o override
       status: "PENDENTE",
       exibirComoPago: false,
+      valorCustomizado: 99, // o input cru viaja, mas a tela mostra "isento"
+    });
+  });
+
+  it("valor customizado (override): valorAPagar = override, marcado como manual", async () => {
+    const p = await prisma.participante.create({
+      data: { nome: "Manual", valorCustomizado: 15 }, // fórmula daria 40
+    });
+    const resp = await get(`/participantes/${p.id}/perfil`);
+    expect(resp.statusCode).toBe(200);
+    expect(resp.json().pagamento).toEqual({
+      isento: false,
+      valorAPagar: 15, // override substitui a fórmula
+      status: "PENDENTE",
+      exibirComoPago: false,
+      valorCustomizado: 15,
     });
   });
 

@@ -1,4 +1,4 @@
-import { ChevronLeft, VenetianMask } from "lucide-react";
+import { ChevronLeft, Pencil, VenetianMask } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
@@ -127,6 +127,15 @@ export function Perfil() {
             <span className="font-medium tabular-nums">
               {pagamento.valorAPagar !== null ? reais(pagamento.valorAPagar) : "—"}
             </span>
+            {pagamento.valorCustomizado !== null && (
+              <span
+                className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs font-medium text-info"
+                title="Valor definido manualmente (ignora a fórmula de base/desconto/piso)"
+              >
+                <Pencil className="size-3.5" aria-hidden />
+                valor manual
+              </span>
+            )}
             {pagamento.exibirComoPago && pagamento.status !== "PAGO" && (
               <span
                 className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-info"

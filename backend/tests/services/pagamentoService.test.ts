@@ -129,6 +129,43 @@ describe.skipIf(!temBanco)("pagamentoService (integração com Postgres)", () =>
     });
   });
 
+  describe("valor customizado (override) — fatia #4", () => {
+    it("override substitui a fórmula no valor e nos totais (ignora indicação e piso)", async () => {
+      const ana = await criar("Ana"); // fórmula daria 40
+      await criar("Indicado", ana.id); // Ana teria 35 pela fórmula
+      // Override R$ 12 → paga 12, independente dos indicados.
+      await prisma.participante.update({
+        where: { id: ana.id },
+        data: { valorCustomizado: 12 },
+      });
+
+      expect(await valorDe(ana.id)).toBe(12);
+
+      const { participantes, totais } = await service.listarPagamentos();
+      const linhaAna = participantes.find((p) => p.id === ana.id);
+      expect(linhaAna?.valorCustomizado).toBe(12); // sinalizador cru p/ o marcador "manual"
+      // Esperado = Ana(12, override) + Indicado(40, fórmula) = 52 (totais derivam de graça).
+      expect(totais.esperado).toBe(52);
+    });
+
+    it("override abaixo do piso é aceito (R$ 3) — override é livre", async () => {
+      const a = await criar("Ana");
+      await prisma.participante.update({ where: { id: a.id }, data: { valorCustomizado: 3 } });
+      expect(await valorDe(a.id)).toBe(3);
+    });
+
+    it("ISENTO vence o override: isento+override → fora da cobrança (precedência)", async () => {
+      await criar("Ana", null, "PAGO"); // paga 40
+      const ze = await criar("Zé", null, "PENDENTE", true); // isento
+      await prisma.participante.update({ where: { id: ze.id }, data: { valorCustomizado: 99 } });
+
+      const { participantes, totais } = await service.listarPagamentos();
+      // Zé isento continua FORA — o override não o traz de volta (isento > override).
+      expect(participantes.map((p) => p.nome)).toEqual(["Ana"]);
+      expect(totais.esperado).toBe(40); // só Ana
+    });
+  });
+
   describe("visão pública (exibir como pago no grupo) — §8.8", () => {
     it("a exportação conta o pendente maquiado em recebido/falta; a visão real NÃO", async () => {
       await criar("Ana", null, "PAGO"); // paga 40 de verdade

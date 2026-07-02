@@ -1,4 +1,4 @@
-import { Loader2, VenetianMask } from "lucide-react";
+import { Loader2, Pencil, VenetianMask } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ApiError } from "@/api/client";
@@ -206,7 +206,20 @@ export function Pagamentos() {
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{p.apelido ?? "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{reais(p.valorAPagar)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <span className="inline-flex items-center justify-end gap-1">
+                          {reais(p.valorAPagar)}
+                          {p.valorCustomizado !== null && (
+                            <span
+                              className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs font-medium text-info"
+                              title="Valor definido manualmente (ignora a fórmula de base/desconto/piso)"
+                            >
+                              <Pencil className="size-3" aria-hidden />
+                              manual
+                            </span>
+                          )}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         {/* Verdade na tela: o badge é SEMPRE o status real; o 🎭 avisa quem
                             aparece como pago só na exportação (legível por si, sem hover). */}

@@ -64,6 +64,11 @@ model Participante {
   // maquia a EXPORTAÇÃO do WhatsApp (visão pública). É INPUT do organizador — por isso
   // se grava (mesmo padrão de `isento`); NÃO é dado derivado (CLAUDE.md §3.2).
   exibirComoPago Boolean    @default(false)
+  // Valor a pagar CUSTOMIZADO (override, fatia #4): quando presente, SUBSTITUI a fórmula
+  // inteira (base R$40, desconto por indicação, piso R$5). É INPUT do organizador — grava-se
+  // o valor DIGITADO, nunca um derivado (CLAUDE.md §3.2, mesmo padrão de isento). NULL = sem
+  // override (usa a fórmula). Isento vence o override (tratado por exclusão no serviço).
+  valorCustomizado Int?
   criadoEm DateTime        @default(now())
 
   // Indicação AUTO-REFERENTE (o ponto mais interessante da modelagem, arq. §4.5):

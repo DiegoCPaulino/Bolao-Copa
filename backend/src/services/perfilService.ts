@@ -31,6 +31,9 @@ export type PerfilParticipante = {
     // Sinalizador CRU (§8.8): permite o perfil (visão interna) AVISAR que o participante
     // aparece como pago só na exportação — nunca mostra "pago" puro no lugar da verdade.
     exibirComoPago: boolean;
+    // Override cru (fatia #4): != null → o valorAPagar veio do override; o perfil marca
+    // "valor manual". Para isento, o override é ignorado (mostra "isento").
+    valorCustomizado: number | null;
   };
   desempenho: {
     pontos: number;
@@ -90,6 +93,7 @@ async function montarPagamento(participante: {
   isento: boolean;
   status: StatusPagamento;
   exibirComoPago: boolean;
+  valorCustomizado: number | null;
 }): Promise<PerfilParticipante["pagamento"]> {
   if (participante.isento) {
     return {
@@ -97,6 +101,7 @@ async function montarPagamento(participante: {
       valorAPagar: null,
       status: participante.status,
       exibirComoPago: participante.exibirComoPago,
+      valorCustomizado: participante.valorCustomizado, // override ignorado p/ isento (tela mostra "isento")
     };
   }
   const { participantes } = await pagamentoService.listarPagamentos();
@@ -106,6 +111,7 @@ async function montarPagamento(participante: {
     valorAPagar: linha?.valorAPagar ?? null,
     status: participante.status,
     exibirComoPago: participante.exibirComoPago,
+    valorCustomizado: participante.valorCustomizado,
   };
 }
 

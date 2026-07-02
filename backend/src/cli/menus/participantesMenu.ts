@@ -1,4 +1,4 @@
-import { confirm, input, select } from "@inquirer/prompts";
+import { confirm, input, number, select } from "@inquirer/prompts";
 import { participanteInputSchema } from "../../schemas/participanteSchemas.js";
 import type { Participante, ParticipanteComIndicador } from "../../services/participanteService.js";
 import * as participantes from "../../services/participanteService.js";
@@ -97,6 +97,11 @@ async function cadastrar(): Promise<void> {
     message: "Exibir como pago no grupo? (só maquia a exportação; não muda o status real)",
     default: false,
   });
+  // Override do valor (Enter vazio = usa a fórmula). Substitui base/desconto/piso.
+  const valorCustomizado = await number({
+    message: "Valor customizado em R$ (Enter p/ usar a fórmula)",
+    min: 0,
+  });
 
   // Zod (casca) transforma a entrada crua no dado tipado do serviço.
   const dados = participanteInputSchema.parse({
@@ -105,6 +110,7 @@ async function cadastrar(): Promise<void> {
     indicadorId,
     isento,
     exibirComoPago,
+    valorCustomizado,
   });
   const criado = await participantes.criarParticipante(dados);
   console.log(`\n✅ Cadastrado: ${rotulo(criado)}\n`);
@@ -128,6 +134,13 @@ async function editar(): Promise<void> {
     message: "Exibir como pago no grupo? (só maquia a exportação; não muda o status real)",
     default: alvo.exibirComoPago,
   });
+  // Prefill com o override atual (se houver); apagar o valor volta à fórmula. Mandar o
+  // campo é essencial: o update é TOTAL, então omiti-lo zeraria o override silenciosamente.
+  const valorCustomizado = await number({
+    message: "Valor customizado em R$ (vazio = usar a fórmula)",
+    default: alvo.valorCustomizado ?? undefined,
+    min: 0,
+  });
 
   const dados = participanteInputSchema.parse({
     nome,
@@ -135,6 +148,7 @@ async function editar(): Promise<void> {
     indicadorId,
     isento,
     exibirComoPago,
+    valorCustomizado,
   });
   const atualizado = await participantes.atualizarParticipante(alvo.id, dados);
   console.log(`\n✅ Atualizado: ${rotulo(atualizado)}\n`);

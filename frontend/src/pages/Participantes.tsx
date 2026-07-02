@@ -42,6 +42,12 @@ const formSchema = z.object({
   indicadorId: z.string(),
   isento: z.boolean(),
   exibirComoPago: z.boolean(),
+  // Valor customizado (override): texto no form. Vazio = sem override (usa a fórmula).
+  // Preenchido = inteiro >= 0 (livre — o override dispensa o piso). O back revalida.
+  valorCustomizado: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || /^\d+$/.test(v), "Informe um valor inteiro ≥ 0 (ou deixe vazio)."),
 });
 type FormCampos = z.infer<typeof formSchema>;
 
@@ -352,6 +358,8 @@ function FormParticipante({
       indicadorId: editando?.indicadorId ?? NENHUM,
       isento: editando?.isento ?? false,
       exibirComoPago: editando?.exibirComoPago ?? false,
+      valorCustomizado:
+        editando?.valorCustomizado != null ? String(editando.valorCustomizado) : "",
     },
   });
 
@@ -362,6 +370,8 @@ function FormParticipante({
       indicadorId: campos.indicadorId === NENHUM ? null : campos.indicadorId,
       isento: campos.isento,
       exibirComoPago: campos.exibirComoPago,
+      // Vazio = sem override (null → volta à fórmula); preenchido = override (inteiro ≥ 0).
+      valorCustomizado: campos.valorCustomizado.trim() === "" ? null : Number(campos.valorCustomizado),
     };
     try {
       if (editando) {
@@ -438,6 +448,25 @@ function FormParticipante({
             Só maquia a exportação do WhatsApp — não muda o status real.
           </span>
         </Label>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="valorCustomizado">Valor customizado (R$)</Label>
+        <Input
+          id="valorCustomizado"
+          type="number"
+          min={0}
+          inputMode="numeric"
+          placeholder="Vazio = usa a fórmula"
+          aria-invalid={errors.valorCustomizado ? true : undefined}
+          {...register("valorCustomizado")}
+        />
+        <span className="text-xs text-muted-foreground">
+          Substitui o cálculo (base, desconto e piso). Vazio = usa a fórmula. Isento ignora este valor.
+        </span>
+        {errors.valorCustomizado && (
+          <p className="text-sm text-destructive">{errors.valorCustomizado.message}</p>
+        )}
       </div>
 
       <DialogFooter>

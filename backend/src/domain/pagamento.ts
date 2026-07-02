@@ -20,6 +20,29 @@ export function calcularValorAPagar(qtdIndicadosDiretos: number): number {
   return Math.max(PISO, valorComDesconto);
 }
 
+/**
+ * Valor a pagar considerando o OVERRIDE opcional do organizador (fatia #4) — funcional
+ * §8.7 estendido.
+ *
+ * Precedência: `valorCustomizado` (quando presente) é o VALOR FINAL e SUBSTITUI a
+ * fórmula inteira — base, desconto por indicação E piso. É INPUT do organizador (não
+ * derivado): "digitou R$ 20, paga R$ 20", mesmo abaixo do piso (o piso é parte da
+ * fórmula que o override dispensa). Sem override (`null`), cai na fórmula intacta.
+ *
+ * A isenção NÃO entra aqui de propósito: isento é tratado por EXCLUSÃO no serviço
+ * (fica fora da cobrança antes de qualquer cálculo), então isento vence o override
+ * sem precisar de um ramo aqui — mesma estrutura do isento de hoje (CLAUDE.md §3.1).
+ *
+ * Função PURA e derivada: o valor a pagar nunca é coluna; o que se grava é a ENTRADA
+ * (`valorCustomizado`), não este resultado (CLAUDE.md §3.2).
+ */
+export function resolverValorAPagar(params: {
+  valorCustomizado: number | null;
+  qtdIndicadosDiretos: number;
+}): number {
+  return params.valorCustomizado ?? calcularValorAPagar(params.qtdIndicadosDiretos);
+}
+
 /** Status de pagamento de um participante — funcional §8.8 (padrão PENDENTE). */
 export type StatusPagamento = "PAGO" | "PENDENTE";
 

@@ -40,6 +40,11 @@ export const participanteInputSchema = z.object({
   // Exibir como pago no grupo (funcional §8.8): mesmo padrão de `isento`. Override de
   // apresentação, só afeta a exportação; default false cobre o corpo HTTP sem o campo.
   exibirComoPago: z.boolean().default(false),
+  // Valor customizado (fatia #4): override do valor a pagar. INPUT opcional; null/ausente =
+  // sem override (usa a fórmula). LIVRE (inteiro >= 0) — o override dispensa o piso, então
+  // aceita R$0/R$3 que a fórmula nunca permitiria. `nullish` = null | undefined; o serviço
+  // normaliza para null. CLI manda number|undefined (prompt); HTTP manda number|null.
+  valorCustomizado: z.number().int().nonnegative().nullish(),
 });
 
 export type ParticipanteInput = z.infer<typeof participanteInputSchema>;

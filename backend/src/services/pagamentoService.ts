@@ -2,7 +2,7 @@ import { ParticipanteNaoEncontrado } from "../domain/erros.js";
 import type { StatusPagamento, TotaisPagamento } from "../domain/pagamento.js";
 import {
   calcularTotaisPagamento,
-  calcularValorAPagar,
+  resolverValorAPagar,
   statusPublico,
 } from "../domain/pagamento.js";
 import type { Participante } from "../repositories/participanteRepository.js";
@@ -30,6 +30,9 @@ export type PagamentoParticipante = {
   // Sinalizador CRU (como `isento`): permite a tela INTERNA mostrar a verdade (status real)
   // e ainda AVISAR quem aparece como pago só na exportação. NÃO é a visão pública (§8.8).
   exibirComoPago: boolean;
+  // Override do valor a pagar (INPUT cru): quando != null, o `valorAPagar` acima veio do
+  // override (não da fórmula). A tela usa isto só para o marcador "valor manual".
+  valorCustomizado: number | null;
 };
 
 export type ResumoPagamentos = {
@@ -70,9 +73,14 @@ async function derivarCobranca(): Promise<PagamentoParticipante[]> {
       id: p.id,
       nome: p.nome,
       apelido: p.apelido,
-      valorAPagar: calcularValorAPagar(indicadosPorId.get(p.id) ?? 0),
+      // Override (INPUT) vence a fórmula; isento já saiu no filtro acima (isento > override).
+      valorAPagar: resolverValorAPagar({
+        valorCustomizado: p.valorCustomizado,
+        qtdIndicadosDiretos: indicadosPorId.get(p.id) ?? 0,
+      }),
       status: p.status,
       exibirComoPago: p.exibirComoPago,
+      valorCustomizado: p.valorCustomizado,
     }));
 }
 

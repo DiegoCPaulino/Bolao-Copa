@@ -18,6 +18,9 @@ export type PagamentoParticipante = {
   valorAPagar: number;
   status: StatusPagamento;
   exibirComoPago: boolean;
+  // Override cru (fatia #4): != null → o valorAPagar veio do override (não da fórmula).
+  // A tela usa só para o marcador "valor manual" (não recalcula nada).
+  valorCustomizado: number | null;
 };
 
 /** Totais agregados — DERIVADOS no backend (§8.8). A tela exibe, nunca recalcula. */

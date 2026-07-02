@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calcularTotaisPagamento,
   calcularValorAPagar,
+  resolverValorAPagar,
   statusPublico,
 } from "../../src/domain/pagamento.js";
 
@@ -31,6 +32,39 @@ describe("calcularValorAPagar (regra de indicação — funcional §8.7)", () =>
       { indicados: 15, valor: 5 }, // crua: 40 − 75 = −35
     ])("$indicados indicado(s) → R$ $valor (trava no piso)", ({ indicados, valor }) => {
       expect(calcularValorAPagar(indicados)).toBe(valor);
+    });
+  });
+});
+
+describe("resolverValorAPagar (override de valor — fatia #4)", () => {
+  // SEM override: cai na fórmula §8.7 (comportamento idêntico ao de hoje).
+  describe("sem override (valorCustomizado null) → fórmula §8.7 intacta", () => {
+    it.each([
+      { indicados: 0, valor: 40 },
+      { indicados: 1, valor: 35 },
+      { indicados: 7, valor: 5 },
+      { indicados: 15, valor: 5 }, // trava no piso
+    ])("$indicados indicado(s) → R$ $valor", ({ indicados, valor }) => {
+      expect(resolverValorAPagar({ valorCustomizado: null, qtdIndicadosDiretos: indicados })).toBe(
+        valor,
+      );
+    });
+  });
+
+  // COM override: substitui a fórmula INTEIRA (base, desconto E piso). O nº de
+  // indicados é ignorado por completo.
+  describe("com override → substitui a fórmula (ignora indicação e piso)", () => {
+    it("override R$ 20 vence a fórmula (mesmo com 0 indicados, que daria 40)", () => {
+      expect(resolverValorAPagar({ valorCustomizado: 20, qtdIndicadosDiretos: 0 })).toBe(20);
+    });
+    it("override R$ 3 (abaixo do piso) é aceito — override é livre", () => {
+      expect(resolverValorAPagar({ valorCustomizado: 3, qtdIndicadosDiretos: 0 })).toBe(3);
+    });
+    it("override R$ 0 é aceito (grátis manual)", () => {
+      expect(resolverValorAPagar({ valorCustomizado: 0, qtdIndicadosDiretos: 5 })).toBe(0);
+    });
+    it("override ignora o nº de indicados (10 indicados, override 25 → 25)", () => {
+      expect(resolverValorAPagar({ valorCustomizado: 25, qtdIndicadosDiretos: 10 })).toBe(25);
     });
   });
 });
