@@ -102,24 +102,31 @@ export function buildApp(config: ConfigApp): FastifyInstance {
     allowedHeaders: ["Content-Type"],
   });
 
-  // Sessão por cookie + rotas públicas de auth (/auth/login, /auth/logout).
-  registrarAuth(app, config);
+  // Toda a API vive sob /api (SAME-ORIGIN: o SPA ocupa a raiz e `/rodadas` é TELA, não
+  // API — o prefixo desambigua os caminhos que colidiriam). `/health` FICA na raiz (é o
+  // contrato do healthcheck do Render). `registrarAuth` entra AQUI dentro, então a sessão
+  // fica no escopo da API e na MESMA ordem de antes (sessão antes das rotas protegidas).
+  app.register(
+    async (api) => {
+      // Sessão por cookie + rotas públicas de auth (/api/auth/login, /api/auth/logout).
+      registrarAuth(api, config);
 
-  // Escopo PROTEGIDO: o `preHandler` tranca tudo que for registrado aqui dentro — as
-  // rotas de feature nascem exigindo sessão (sem cookie → 401). /me é a prova do loop
-  // login → sessão → acesso; as features entram como plugins (6.3a: participantes).
-  app.register(async (protegidas) => {
-    protegidas.addHook("preHandler", exigirSessao);
-    protegidas.get("/me", async () => ({ autenticado: true }));
-    // Cada feature é um plugin no MESMO molde da rota-piloto (6.3a) — todas nascem
-    // protegidas. Fecha a Fase 6: todos os serviços expostos por HTTP.
-    protegidas.register(rotasParticipantes);
-    protegidas.register(rotasPagamentos);
-    protegidas.register(rotasSelecoes);
-    protegidas.register(rotasRodadas);
-    protegidas.register(rotasPalpites);
-    protegidas.register(rotasPainel);
-  });
+      // Escopo PROTEGIDO: o `preHandler` tranca tudo aqui dentro — as rotas de feature
+      // nascem exigindo sessão (sem cookie → 401). /me é a prova do loop login → sessão →
+      // acesso; as features entram como plugins (6.3a: participantes).
+      api.register(async (protegidas) => {
+        protegidas.addHook("preHandler", exigirSessao);
+        protegidas.get("/me", async () => ({ autenticado: true }));
+        protegidas.register(rotasParticipantes);
+        protegidas.register(rotasPagamentos);
+        protegidas.register(rotasSelecoes);
+        protegidas.register(rotasRodadas);
+        protegidas.register(rotasPalpites);
+        protegidas.register(rotasPainel);
+      });
+    },
+    { prefix: "/api" },
+  );
 
   return app;
 }

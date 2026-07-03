@@ -68,17 +68,17 @@ async function main(): Promise<void> {
 
   // 1) Login — a senha vem do env SMOKE_SENHA ou de um prompt oculto (nunca do .env).
   const senha = process.env.SMOKE_SENHA ?? (await password({ message: "Senha do organizador:" }));
-  const login = await fetch(`${BASE}/auth/login`, {
+  const login = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ senha }),
   });
   const setCookie = login.headers.getSetCookie().find((c) => c.startsWith("bolao_sessao="));
   cookie = setCookie ? (setCookie.split(";")[0] ?? "") : "";
-  if (!passo("POST /auth/login", login.status === 200 && cookie !== "", login.status)) return;
+  if (!passo("POST /api/auth/login", login.status === 200 && cookie !== "", login.status)) return;
 
   // 0) Catálogo: precisa de >= 4 seleções para montar 2 jogos distintos.
-  const sel = await req<Selecao[]>("GET", "/selecoes");
+  const sel = await req<Selecao[]>("GET", "/api/selecoes");
   const selecoes = Array.isArray(sel.json) ? sel.json : [];
   if (
     !passo(
@@ -96,7 +96,7 @@ async function main(): Promise<void> {
   let rodadaId = "";
   try {
     // 2) Criar rodada VAZIA (jogos ausente → 201).
-    const criada = await req<Rodada>("POST", "/rodadas", { fase: FASE });
+    const criada = await req<Rodada>("POST", "/api/rodadas", { fase: FASE });
     rodadaId = criada.json?.id ?? "";
     if (
       !passo(
@@ -110,7 +110,7 @@ async function main(): Promise<void> {
     }
 
     // 3) Adicionar 2 jogos.
-    const ad1 = await req<Rodada>("POST", `/rodadas/${rodadaId}/jogos`, {
+    const ad1 = await req<Rodada>("POST", `/api/rodadas/${rodadaId}/jogos`, {
       selecaoEsquerdaId: a.id,
       selecaoDireitaId: b.id,
     });
@@ -120,7 +120,7 @@ async function main(): Promise<void> {
       ad1.status,
       `${a.nome} x ${b.nome}`,
     );
-    const ad2 = await req<Rodada>("POST", `/rodadas/${rodadaId}/jogos`, {
+    const ad2 = await req<Rodada>("POST", `/api/rodadas/${rodadaId}/jogos`, {
       selecaoEsquerdaId: c.id,
       selecaoDireitaId: d.id,
     });
@@ -136,19 +136,19 @@ async function main(): Promise<void> {
     const j2Id = jogos[1]?.id ?? "";
 
     // 4) Editar o 1º jogo (troca a direita).
-    const ed = await req<Rodada>("PUT", `/jogos/${j1Id}`, {
+    const ed = await req<Rodada>("PUT", `/api/jogos/${j1Id}`, {
       selecaoEsquerdaId: a.id,
       selecaoDireitaId: c.id,
     });
-    passo("PUT /jogos/:id (editar #1)", ed.status === 200, ed.status, `${a.nome} x ${c.nome}`);
+    passo("PUT /api/jogos/:id (editar #1)", ed.status === 200, ed.status, `${a.nome} x ${c.nome}`);
 
     // 5) Detalhar (imprime os jogos).
-    const det1 = await req<Rodada>("GET", `/rodadas/${rodadaId}`);
-    passo("GET /rodadas/:id (detalhar)", det1.status === 200, det1.status);
+    const det1 = await req<Rodada>("GET", `/api/rodadas/${rodadaId}`);
+    passo("GET /api/rodadas/:id (detalhar)", det1.status === 200, det1.status);
     imprimirJogos(det1.json);
 
     // 6) Remover 1 jogo.
-    const rem = await req<Rodada>("DELETE", `/jogos/${j2Id}`);
+    const rem = await req<Rodada>("DELETE", `/api/jogos/${j2Id}`);
     passo(
       "DELETE /jogos/:id (remover #2)",
       rem.status === 200 && rem.json?.jogos?.length === 1,
@@ -156,7 +156,7 @@ async function main(): Promise<void> {
     );
 
     // 7) Avançar o estado (ciclo de vida — guia, sem trava).
-    const est = await req<Rodada>("PUT", `/rodadas/${rodadaId}/estado`, {
+    const est = await req<Rodada>("PUT", `/api/rodadas/${rodadaId}/estado`, {
       estado: "PALPITES_ABERTOS",
     });
     passo(
@@ -167,7 +167,7 @@ async function main(): Promise<void> {
     );
 
     // 8) Detalhar de novo.
-    const det2 = await req<Rodada>("GET", `/rodadas/${rodadaId}`);
+    const det2 = await req<Rodada>("GET", `/api/rodadas/${rodadaId}`);
     passo(
       "GET /rodadas/:id (de novo)",
       det2.status === 200 && det2.json?.jogos?.length === 1,

@@ -20,7 +20,7 @@ afterAll(async () => {
 });
 
 const login = (senha: string) =>
-  app.inject({ method: "POST", url: "/auth/login", payload: { senha } });
+  app.inject({ method: "POST", url: "/api/auth/login", payload: { senha } });
 
 /** Extrai o par nome=valor do cookie de sessão de uma resposta com Set-Cookie. */
 function cookieDaResposta(res: Awaited<ReturnType<typeof login>>): Record<string, string> {
@@ -31,7 +31,7 @@ function cookieDaResposta(res: Awaited<ReturnType<typeof login>>): Record<string
 
 describe("auth single-user — Fatia 6.2", () => {
   it("/me sem cookie → 401", async () => {
-    const res = await app.inject({ method: "GET", url: "/me" });
+    const res = await app.inject({ method: "GET", url: "/api/me" });
     expect(res.statusCode).toBe(401);
     expect(res.json()).toMatchObject({ erro: { codigo: "NAO_AUTENTICADO" } });
   });
@@ -59,7 +59,7 @@ describe("auth single-user — Fatia 6.2", () => {
     const loginRes = await login(SENHA_TESTE);
     const res = await app.inject({
       method: "GET",
-      url: "/me",
+      url: "/api/me",
       cookies: cookieDaResposta(loginRes),
     });
     expect(res.statusCode).toBe(200);
@@ -70,12 +70,16 @@ describe("auth single-user — Fatia 6.2", () => {
     const loginRes = await login(SENHA_TESTE);
     const sessao = cookieDaResposta(loginRes);
 
-    const logoutRes = await app.inject({ method: "POST", url: "/auth/logout", cookies: sessao });
+    const logoutRes = await app.inject({
+      method: "POST",
+      url: "/api/auth/logout",
+      cookies: sessao,
+    });
     expect(logoutRes.statusCode).toBe(200);
 
     // O logout devolve o cookie LIMPO (o navegador passaria a mandar isto); /me nega.
     const limpo = cookieDaResposta(logoutRes);
-    const res = await app.inject({ method: "GET", url: "/me", cookies: limpo });
+    const res = await app.inject({ method: "GET", url: "/api/me", cookies: limpo });
     expect(res.statusCode).toBe(401);
   });
 });

@@ -36,7 +36,7 @@ async function setup() {
     novaSelecao(),
   ]);
   const rodada = (
-    await post("/rodadas", {
+    await post("/api/rodadas", {
       fase: "OITAVAS",
       jogos: [
         { selecaoEsquerdaId: e1, selecaoDireitaId: d1 },
@@ -51,11 +51,11 @@ async function setup() {
   const bruno = await prisma.participante.create({ data: { nome: "Bruno" } });
   await prisma.participante.create({ data: { nome: "Carla" } });
 
-  await put(`/participantes/${ana.id}/rodadas/${rodada.id}/jogos/${j1}/palpite`, {
+  await put(`/api/participantes/${ana.id}/rodadas/${rodada.id}/jogos/${j1}/palpite`, {
     golsEsquerda: 2,
     golsDireita: 1,
   });
-  await put(`/participantes/${bruno.id}/rodadas/${rodada.id}/jogos/${j2}/palpite`, {
+  await put(`/api/participantes/${bruno.id}/rodadas/${rodada.id}/jogos/${j2}/palpite`, {
     golsEsquerda: 1,
     golsDireita: 1,
   });
@@ -66,7 +66,7 @@ beforeAll(async () => {
   await app.ready();
   const login = await app.inject({
     method: "POST",
-    url: "/auth/login",
+    url: "/api/auth/login",
     payload: { senha: SENHA_TESTE },
   });
   const cookie = login.cookies.find((c) => c.name === "bolao_sessao");
@@ -83,7 +83,7 @@ describe.skipIf(!temBanco)("exports por jogo (#5.2, HTTP autenticado)", () => {
 
   it("tabela por jogo: só os palpites DAQUELE jogo, um bloco único", async () => {
     const { j1 } = await setup();
-    const res = await get(`/jogos/${j1}/export/tabela`);
+    const res = await get(`/api/jogos/${j1}/export/tabela`);
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("text/plain");
     // Título identifica o jogo; bloco do J1 com o palpite da Ana; Bruno (palpitou o J2) fora.
@@ -97,7 +97,7 @@ describe.skipIf(!temBanco)("exports por jogo (#5.2, HTTP autenticado)", () => {
   it("pendências por jogo: quem NÃO palpitou ESTE jogo (mesmo tendo palpitado outro)", async () => {
     const { j1, j2 } = await setup();
 
-    const p1 = await get(`/jogos/${j1}/export/pendencias`);
+    const p1 = await get(`/api/jogos/${j1}/export/pendencias`);
     expect(p1.statusCode).toBe(200);
     expect(p1.body).toContain("FALTAM PALPITES — J1");
     // Bruno palpitou só o J2 → pendente do J1. Carla, nada → pendente. Ana palpitou o J1 → fora.
@@ -105,20 +105,20 @@ describe.skipIf(!temBanco)("exports por jogo (#5.2, HTTP autenticado)", () => {
     expect(p1.body).toContain("Carla");
     expect(p1.body).not.toContain("Ana");
 
-    const p2 = await get(`/jogos/${j2}/export/pendencias`);
+    const p2 = await get(`/api/jogos/${j2}/export/pendencias`);
     expect(p2.body).toContain("Ana");
     expect(p2.body).toContain("Carla");
     expect(p2.body).not.toContain("Bruno");
   });
 
   it("404 jogo inexistente; 401 sem cookie", async () => {
-    expect((await get("/jogos/nao-existe/export/tabela")).statusCode).toBe(404);
-    expect((await get("/jogos/nao-existe/export/pendencias")).statusCode).toBe(404);
-    expect((await app.inject({ method: "GET", url: "/jogos/x/export/tabela" })).statusCode).toBe(
-      401,
-    );
+    expect((await get("/api/jogos/nao-existe/export/tabela")).statusCode).toBe(404);
+    expect((await get("/api/jogos/nao-existe/export/pendencias")).statusCode).toBe(404);
     expect(
-      (await app.inject({ method: "GET", url: "/jogos/x/export/pendencias" })).statusCode,
+      (await app.inject({ method: "GET", url: "/api/jogos/x/export/tabela" })).statusCode,
+    ).toBe(401);
+    expect(
+      (await app.inject({ method: "GET", url: "/api/jogos/x/export/pendencias" })).statusCode,
     ).toBe(401);
   });
 });

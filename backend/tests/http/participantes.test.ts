@@ -23,7 +23,7 @@ beforeAll(async () => {
   await app.ready();
   const res = await app.inject({
     method: "POST",
-    url: "/auth/login",
+    url: "/api/auth/login",
     payload: { senha: SENHA_TESTE },
   });
   const cookie = res.cookies.find((c) => c.name === "bolao_sessao");
@@ -36,13 +36,13 @@ afterAll(async () => {
 });
 
 const criar = (corpo: Record<string, unknown>) =>
-  app.inject({ method: "POST", url: "/participantes", cookies: sessao, payload: corpo });
+  app.inject({ method: "POST", url: "/api/participantes", cookies: sessao, payload: corpo });
 
 describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
   beforeEach(limparBanco);
 
   it("sem cookie → 401 (toda rota nasce protegida)", async () => {
-    const res = await app.inject({ method: "GET", url: "/participantes" });
+    const res = await app.inject({ method: "GET", url: "/api/participantes" });
     expect(res.statusCode).toBe(401);
     expect(res.json()).toMatchObject({ erro: { codigo: "NAO_AUTENTICADO" } });
   });
@@ -64,13 +64,13 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
     await criar({ nome: "Ana" });
     await criar({ nome: "Bruno" });
 
-    const todos = await app.inject({ method: "GET", url: "/participantes", cookies: sessao });
+    const todos = await app.inject({ method: "GET", url: "/api/participantes", cookies: sessao });
     expect(todos.statusCode).toBe(200);
     expect(todos.json().map((p: { nome: string }) => p.nome)).toEqual(["Ana", "Bruno"]);
 
     const filtrado = await app.inject({
       method: "GET",
-      url: "/participantes?busca=bru",
+      url: "/api/participantes?busca=bru",
       cookies: sessao,
     });
     expect(filtrado.json().map((p: { nome: string }) => p.nome)).toEqual(["Bruno"]);
@@ -81,7 +81,7 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
 
     const ok = await app.inject({
       method: "GET",
-      url: `/participantes/${criado.id}`,
+      url: `/api/participantes/${criado.id}`,
       cookies: sessao,
     });
     expect(ok.statusCode).toBe(200);
@@ -89,7 +89,7 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
 
     const naoExiste = await app.inject({
       method: "GET",
-      url: "/participantes/nao-existe",
+      url: "/api/participantes/nao-existe",
       cookies: sessao,
     });
     expect(naoExiste.statusCode).toBe(404);
@@ -100,7 +100,7 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
     const criado = (await criar({ nome: "Ana" })).json();
     const res = await app.inject({
       method: "PUT",
-      url: `/participantes/${criado.id}`,
+      url: `/api/participantes/${criado.id}`,
       cookies: sessao,
       payload: { nome: "Ana Paula", apelido: "Aninha", isento: true },
     });
@@ -112,7 +112,7 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
     const criado = (await criar({ nome: "Ana" })).json();
     const del = await app.inject({
       method: "DELETE",
-      url: `/participantes/${criado.id}`,
+      url: `/api/participantes/${criado.id}`,
       cookies: sessao,
     });
     expect(del.statusCode).toBe(204);
@@ -120,7 +120,7 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
 
     const apos = await app.inject({
       method: "GET",
-      url: `/participantes/${criado.id}`,
+      url: `/api/participantes/${criado.id}`,
       cookies: sessao,
     });
     expect(apos.statusCode).toBe(404);
@@ -130,7 +130,11 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
     await criar({ nome: "Ana" });
     await criar({ nome: "Bruno" });
 
-    const res = await app.inject({ method: "GET", url: "/participantes/export", cookies: sessao });
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/participantes/export",
+      cookies: sessao,
+    });
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("text/plain");
     expect(res.body).toContain("👥 *PARTICIPANTES (2)*");

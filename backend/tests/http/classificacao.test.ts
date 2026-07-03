@@ -31,7 +31,7 @@ beforeAll(async () => {
   await app.ready();
   const login = await app.inject({
     method: "POST",
-    url: "/auth/login",
+    url: "/api/auth/login",
     payload: { senha: SENHA_TESTE },
   });
   const cookie = login.cookies.find((c) => c.name === "bolao_sessao");
@@ -49,7 +49,7 @@ describe.skipIf(!temBanco)("GET /classificacao (JSON, HTTP autenticado)", () => 
   it("200 + lista ORDENADA pela cascata (mais pontos primeiro)", async () => {
     const [e, d] = await Promise.all([novaSelecao(), novaSelecao()]);
     const rodada = (
-      await post("/rodadas", {
+      await post("/api/rodadas", {
         fase: "OITAVAS",
         jogos: [{ selecaoEsquerdaId: e, selecaoDireitaId: d }],
       })
@@ -60,17 +60,17 @@ describe.skipIf(!temBanco)("GET /classificacao (JSON, HTTP autenticado)", () => 
     const bruno = await prisma.participante.create({ data: { nome: "Bruno" } });
 
     // Resultado 2x1: Ana crava (3 pts); Bruno acerta o vencedor com placar errado (1 pt).
-    await put(`/participantes/${ana.id}/rodadas/${rodada.id}/jogos/${jogoId}/palpite`, {
+    await put(`/api/participantes/${ana.id}/rodadas/${rodada.id}/jogos/${jogoId}/palpite`, {
       golsEsquerda: 2,
       golsDireita: 1,
     });
-    await put(`/participantes/${bruno.id}/rodadas/${rodada.id}/jogos/${jogoId}/palpite`, {
+    await put(`/api/participantes/${bruno.id}/rodadas/${rodada.id}/jogos/${jogoId}/palpite`, {
       golsEsquerda: 3,
       golsDireita: 1,
     });
-    await put(`/jogos/${jogoId}/resultado`, { golsEsquerda: 2, golsDireita: 1 });
+    await put(`/api/jogos/${jogoId}/resultado`, { golsEsquerda: 2, golsDireita: 1 });
 
-    const resp = await get("/classificacao");
+    const resp = await get("/api/classificacao");
     expect(resp.statusCode).toBe(200);
     const linhas = resp.json() as { id: string; nome: string; pontos: number }[];
     expect(linhas).toHaveLength(2);
@@ -81,6 +81,6 @@ describe.skipIf(!temBanco)("GET /classificacao (JSON, HTTP autenticado)", () => 
   });
 
   it("sem cookie → 401 (rota nasce protegida)", async () => {
-    expect((await app.inject({ method: "GET", url: "/classificacao" })).statusCode).toBe(401);
+    expect((await app.inject({ method: "GET", url: "/api/classificacao" })).statusCode).toBe(401);
   });
 });

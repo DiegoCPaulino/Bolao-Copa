@@ -22,7 +22,7 @@ describe("CORS — libera só a origem do front, com credenciais", () => {
   it("preflight (OPTIONS) da origem permitida → libera método e credenciais", async () => {
     const res = await app.inject({
       method: "OPTIONS",
-      url: "/auth/login",
+      url: "/api/auth/login",
       headers: {
         origin: ORIGEM_TESTE,
         "access-control-request-method": "POST",

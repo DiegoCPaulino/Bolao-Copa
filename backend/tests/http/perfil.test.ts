@@ -31,7 +31,7 @@ async function novaSelecao(): Promise<string> {
 async function novaRodada(fase: string): Promise<{ rodadaId: string; jogoId: string }> {
   const [e, d] = await Promise.all([novaSelecao(), novaSelecao()]);
   const r = (
-    await post("/rodadas", { fase, jogos: [{ selecaoEsquerdaId: e, selecaoDireitaId: d }] })
+    await post("/api/rodadas", { fase, jogos: [{ selecaoEsquerdaId: e, selecaoDireitaId: d }] })
   ).json() as { id: string; jogos: { id: string }[] };
   return { rodadaId: r.id, jogoId: r.jogos[0]?.id ?? "" };
 }
@@ -40,7 +40,7 @@ beforeAll(async () => {
   await app.ready();
   const login = await app.inject({
     method: "POST",
-    url: "/auth/login",
+    url: "/api/auth/login",
     payload: { senha: SENHA_TESTE },
   });
   const cookie = login.cookies.find((c) => c.name === "bolao_sessao");
@@ -67,14 +67,14 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
 
     // Rodada 1 DECIDIDA: Ana crava 2x1 (3 pts). Rodada 2 sem resultado (aguardando).
     const r1 = await novaRodada("OITAVAS");
-    await put(`/participantes/${ana.id}/rodadas/${r1.rodadaId}/jogos/${r1.jogoId}/palpite`, {
+    await put(`/api/participantes/${ana.id}/rodadas/${r1.rodadaId}/jogos/${r1.jogoId}/palpite`, {
       golsEsquerda: 2,
       golsDireita: 1,
     });
-    await put(`/jogos/${r1.jogoId}/resultado`, { golsEsquerda: 2, golsDireita: 1 });
+    await put(`/api/jogos/${r1.jogoId}/resultado`, { golsEsquerda: 2, golsDireita: 1 });
     const r2 = await novaRodada("QUARTAS");
 
-    const resp = await get(`/participantes/${ana.id}/perfil`);
+    const resp = await get(`/api/participantes/${ana.id}/perfil`);
     expect(resp.statusCode).toBe(200);
     const perfil = resp.json();
 
@@ -114,7 +114,7 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
     const p = await prisma.participante.create({
       data: { nome: "Isento", isento: true, valorCustomizado: 99 },
     });
-    const resp = await get(`/participantes/${p.id}/perfil`);
+    const resp = await get(`/api/participantes/${p.id}/perfil`);
     expect(resp.statusCode).toBe(200);
     expect(resp.json().pagamento).toEqual({
       isento: true,
@@ -129,7 +129,7 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
     const p = await prisma.participante.create({
       data: { nome: "Manual", valorCustomizado: 15 }, // fórmula daria 40
     });
-    const resp = await get(`/participantes/${p.id}/perfil`);
+    const resp = await get(`/api/participantes/${p.id}/perfil`);
     expect(resp.statusCode).toBe(200);
     expect(resp.json().pagamento).toEqual({
       isento: false,
@@ -141,12 +141,12 @@ describe.skipIf(!temBanco)("GET /participantes/:id/perfil (8.5-A, HTTP autentica
   });
 
   it("404 id inexistente", async () => {
-    expect((await get("/participantes/nao-existe/perfil")).statusCode).toBe(404);
+    expect((await get("/api/participantes/nao-existe/perfil")).statusCode).toBe(404);
   });
 
   it("sem cookie → 401 (rota nasce protegida)", async () => {
-    expect((await app.inject({ method: "GET", url: "/participantes/x/perfil" })).statusCode).toBe(
-      401,
-    );
+    expect(
+      (await app.inject({ method: "GET", url: "/api/participantes/x/perfil" })).statusCode,
+    ).toBe(401);
   });
 });

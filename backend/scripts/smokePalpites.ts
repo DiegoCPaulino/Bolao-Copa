@@ -61,18 +61,18 @@ async function main(): Promise<void> {
   console.log(`\n🔥 Smoke — palpites/pontuação (Rodada-detalhe) @ ${BASE}\n`);
 
   const senha = process.env.SMOKE_SENHA ?? (await password({ message: "Senha do organizador:" }));
-  const login = await fetch(`${BASE}/auth/login`, {
+  const login = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ senha }),
   });
   const setCookie = login.headers.getSetCookie().find((c) => c.startsWith("bolao_sessao="));
   cookie = setCookie ? (setCookie.split(";")[0] ?? "") : "";
-  if (!passo("POST /auth/login", login.status === 200 && cookie !== "", login.status)) return;
+  if (!passo("POST /api/auth/login", login.status === 200 && cookie !== "", login.status)) return;
 
-  const sel = await req<Selecao[]>("GET", "/selecoes");
+  const sel = await req<Selecao[]>("GET", "/api/selecoes");
   const selecoes = Array.isArray(sel.json) ? sel.json : [];
-  if (!passo("GET /selecoes (>= 2)", sel.status === 200 && selecoes.length >= 2, sel.status)) {
+  if (!passo("GET /api/selecoes (>= 2)", sel.status === 200 && selecoes.length >= 2, sel.status)) {
     console.log("\n  (catálogo insuficiente — rode `npm run db:seed`)");
     return;
   }
@@ -82,13 +82,13 @@ async function main(): Promise<void> {
   let participanteId = "";
   try {
     // Monta rodada de 1 jogo (atômico) + participante descartável.
-    const criada = await req<Rodada>("POST", "/rodadas", {
+    const criada = await req<Rodada>("POST", "/api/rodadas", {
       fase: "DEZESSEIS_AVOS",
       jogos: [{ selecaoEsquerdaId: a.id, selecaoDireitaId: b.id }],
     });
     rodadaId = criada.json?.id ?? "";
     const jogoId = criada.json?.jogos?.[0]?.id ?? "";
-    if (!passo("POST /rodadas (1 jogo)", criada.status === 201 && jogoId !== "", criada.status))
+    if (!passo("POST /api/rodadas (1 jogo)", criada.status === 201 && jogoId !== "", criada.status))
       return;
 
     const part = await prisma.participante.create({ data: { nome: "Smoke Palpiteiro" } });
@@ -98,7 +98,7 @@ async function main(): Promise<void> {
     // PUT palpite SINGULAR (cravou 2x1).
     const reg = await req<Palpite>(
       "PUT",
-      `/participantes/${participanteId}/rodadas/${rodadaId}/jogos/${jogoId}/palpite`,
+      `/api/participantes/${participanteId}/rodadas/${rodadaId}/jogos/${jogoId}/palpite`,
       { golsEsquerda: 2, golsDireita: 1 },
     );
     passo(
@@ -111,7 +111,7 @@ async function main(): Promise<void> {
     // GET palpites-do-participante (confirma o que gravou).
     const lido = await req<Palpite[]>(
       "GET",
-      `/participantes/${participanteId}/rodadas/${rodadaId}/palpites`,
+      `/api/participantes/${participanteId}/rodadas/${rodadaId}/palpites`,
     );
     passo(
       "GET palpites-do-participante",
@@ -121,14 +121,14 @@ async function main(): Promise<void> {
     );
 
     // PUT resultado (mesmo placar → cravou → 3 pts).
-    const resu = await req<unknown>("PUT", `/jogos/${jogoId}/resultado`, {
+    const resu = await req<unknown>("PUT", `/api/jogos/${jogoId}/resultado`, {
       golsEsquerda: 2,
       golsDireita: 1,
     });
-    passo("PUT /jogos/:id/resultado", resu.status === 200, resu.status, "2x1");
+    passo("PUT /api/jogos/:id/resultado", resu.status === 200, resu.status, "2x1");
 
     // GET pontuação da rodada (recalculada na leitura).
-    const pont = await req<LinhaPontuacao[]>("GET", `/rodadas/${rodadaId}/pontuacao`);
+    const pont = await req<LinhaPontuacao[]>("GET", `/api/rodadas/${rodadaId}/pontuacao`);
     const linha = pont.json?.find((l) => l.id === participanteId);
     passo(
       "GET /rodadas/:id/pontuacao",
@@ -138,12 +138,12 @@ async function main(): Promise<void> {
     );
 
     // GET resumo do jogo (palpites + pontos).
-    const resumo = await req<ResumoJogo>("GET", `/jogos/${jogoId}/resumo`);
+    const resumo = await req<ResumoJogo>("GET", `/api/jogos/${jogoId}/resumo`);
     const meu = resumo.json?.palpites?.find((p) => p.nome === "Smoke Palpiteiro");
-    passo("GET /jogos/:id/resumo", resumo.status === 200 && meu?.pontos === 3, resumo.status);
+    passo("GET /api/jogos/:id/resumo", resumo.status === 200 && meu?.pontos === 3, resumo.status);
 
     // GET tabela de palpites (JSON).
-    const tabela = await req<LinhaTabela[]>("GET", `/rodadas/${rodadaId}/tabela`);
+    const tabela = await req<LinhaTabela[]>("GET", `/api/rodadas/${rodadaId}/tabela`);
     const minha = tabela.json?.find((l) => l.nome === "Smoke Palpiteiro");
     passo(
       "GET /rodadas/:id/tabela",
