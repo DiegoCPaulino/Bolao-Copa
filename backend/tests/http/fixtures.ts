@@ -26,6 +26,7 @@ export function buildAppTeste(): ReturnType<typeof buildApp> {
     organizadorSenhaHash: HASH_TESTE,
     cookieSecure: false,
     frontendOrigin: ORIGEM_TESTE,
+    serveFront: false, // testes exercitam a API; o fallback SPA fica desligado
   };
   return buildApp(config);
 }

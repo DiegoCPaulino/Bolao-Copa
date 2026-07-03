@@ -54,6 +54,19 @@ const envSchema = z.object({
     .refine((v) => v.startsWith("$argon2"), {
       message: "ORGANIZADOR_SENHA_HASH deve ser um hash argon2 (rode `npm run gerar-hash`).",
     }),
+
+  // Servir o SPA buildado no MESMO serviço (Fase 9). Explícito "true"/"false" (não
+  // `coerce.boolean`, que trataria qualquer string não-vazia — inclusive "false" — como
+  // true). Independente do NODE_ENV: dá pra testar same-origin local sobre http (com
+  // cookieSecure=false). Ausente = false (dev usa o Vite).
+  SERVIR_FRONT: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+
+  // Diretório do build do front (opcional). Ausente → o app resolve ../frontend/dist a
+  // partir do cwd. Serve pra apontar outro caminho no empacotamento de produção.
+  FRONT_DIST: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

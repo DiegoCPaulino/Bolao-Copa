@@ -1,4 +1,6 @@
+import path from "node:path";
 import cors from "@fastify/cors";
+import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import { ZodError } from "zod";
 import { ErroDeDominio } from "../domain/erros.js";
@@ -51,6 +53,11 @@ type CorpoErro = {
 export type ConfigApp = {
   logger?: FastifyServerOptions["logger"];
   frontendOrigin: string;
+  // Servir o SPA buildado na mesma origem (Fase 9). Independente do NODE_ENV: em dev o
+  // Vite serve o front (fica false); no serviço único de produção fica true. `frontDist`
+  // permite apontar o diretório do build (default: ../frontend/dist a partir do cwd).
+  serveFront: boolean;
+  frontDist?: string;
 } & ConfigAuth;
 
 export function buildApp(config: ConfigApp): FastifyInstance {
@@ -77,14 +84,6 @@ export function buildApp(config: ConfigApp): FastifyInstance {
     req.log.error(erro);
     const corpo: CorpoErro = { erro: { codigo: "ERRO_INTERNO", mensagem: "Erro interno." } };
     return reply.status(500).send(corpo);
-  });
-
-  // Rota desconhecida no MESMO formato de erro (em vez do 404 padrão do Fastify).
-  app.setNotFoundHandler((req, reply) => {
-    const corpo: CorpoErro = {
-      erro: { codigo: "ROTA_NAO_ENCONTRADA", mensagem: `Rota não encontrada: ${req.url}` },
-    };
-    return reply.status(404).send(corpo);
   });
 
   // Saúde do bootstrap (PÚBLICA, sem auth) — smoke do esqueleto.
@@ -127,6 +126,30 @@ export function buildApp(config: ConfigApp): FastifyInstance {
     },
     { prefix: "/api" },
   );
+
+  // SPA opcional (atrás de `serveFront`): o MESMO serviço serve o front buildado
+  // (frontend/dist) na raiz — same-origin, sem CORS nem cookie cross-site. Só quando
+  // ligado; em dev o Vite serve o front. `wildcard: false`: registra uma rota por
+  // ARQUIVO real (assets), então o resto cai no notFoundHandler (o fallback do SPA).
+  if (config.serveFront) {
+    const dist = config.frontDist ?? path.resolve(process.cwd(), "../frontend/dist");
+    app.register(fastifyStatic, { root: dist, wildcard: false });
+  }
+
+  // 404: `/api/*` e `/health` mantêm o JSON (contrato da API). Com o front ligado,
+  // qualquer OUTRO GET devolve o index.html — o React Router assume o roteamento no
+  // cliente, então dar refresh numa rota interna (ex.: /rodadas) funciona. A API e o
+  // /health são rotas REAIS (casadas antes), então só o que não existe chega aqui.
+  app.setNotFoundHandler((req, reply) => {
+    const ehApi = req.url.startsWith("/api") || req.url.startsWith("/health");
+    if (config.serveFront && !ehApi && req.method === "GET") {
+      return reply.sendFile("index.html");
+    }
+    const corpo: CorpoErro = {
+      erro: { codigo: "ROTA_NAO_ENCONTRADA", mensagem: `Rota não encontrada: ${req.url}` },
+    };
+    return reply.status(404).send(corpo);
+  });
 
   return app;
 }
