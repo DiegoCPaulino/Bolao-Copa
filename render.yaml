@@ -1,20 +1,30 @@
-# Blueprint do Render — deploy de FUMAÇA da Fase 6 (mínimo pro backend subir no free
-# tier). NÃO é a Fase 9 (Docker/VPS/caprichado). Suba via "New > Blueprint" apontando
-# para o repositório. Os segredos (sync: false) são preenchidos no painel, nunca aqui.
+# Blueprint do Render — UM serviço, SAME-ORIGIN: o back serve a API sob /api E o front
+# estático na raiz (Fase 9). Suba via "New > Blueprint" apontando para o repositório. Os
+# segredos (sync: false) são preenchidos no painel, NUNCA aqui.
 services:
   - type: web # serviço HTTP exposto na internet, com HTTPS automático
     name: bolao-backend
     runtime: node # Node puro (sem Docker nesta fase)
     plan: free # free tier: dorme após inatividade — ok para o piloto
     rootDir: backend # o app vive em backend/; os comandos rodam a partir daí
-    # build: instala deps (e gera o Prisma Client, via script build) e compila TS -> dist/
-    buildCommand: npm ci && npm run build
+    # build: coordena os DOIS builds. (1) Front: `--include=dev` porque suas ferramentas
+    # (vite/tsc/tailwind) são devDeps e o node_modules do front é BUILD-ONLY (descartável —
+    # nenhum processo Node do front roda em runtime). (2) Copia o dist para backend/public
+    # (DENTRO do rootDir → sobe no deploy; ../frontend/dist, fora do rootDir, seria frágil).
+    # (3) Back: `npm ci` de prod (a 9.2 pôs prisma/tsc/@types em dependencies) + build.
+    buildCommand: cd ../frontend && npm ci --include=dev && npm run build && cd ../backend && rm -rf public && cp -r ../frontend/dist ./public && npm ci && npm run build
     # start: aplica as migrations existentes (migrate deploy, nunca migrate dev) e sobe
     startCommand: npm run db:deploy && npm run start
     healthCheckPath: /health # rota PÚBLICA que prova que o serviço subiu
     envVars:
       - key: NODE_ENV
         value: production # liga o cookie Secure
+      # Serve o SPA na mesma origem: SERVIR_FRONT liga o @fastify/static + fallback SPA;
+      # FRONT_DIST aponta o dist copiado (relativo ao rootDir backend → backend/public).
+      - key: SERVIR_FRONT
+        value: "true"
+      - key: FRONT_DIST
+        value: public
       - key: DATABASE_URL
         sync: false # segredo — definir no painel do Render
       - key: SESSION_SECRET
@@ -22,3 +32,4 @@ services:
       - key: ORGANIZADOR_SENHA_HASH
         sync: false
       # PORT não é declarada: o Render a injeta e o server lê de process.env.PORT.
+      # FRONTEND_ORIGIN não é necessário: same-origin → o CORS nunca dispara.

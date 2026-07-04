@@ -132,7 +132,10 @@ export function buildApp(config: ConfigApp): FastifyInstance {
   // ligado; em dev o Vite serve o front. `wildcard: false`: registra uma rota por
   // ARQUIVO real (assets), então o resto cai no notFoundHandler (o fallback do SPA).
   if (config.serveFront) {
-    const dist = config.frontDist ?? path.resolve(process.cwd(), "../frontend/dist");
+    // Resolve o `frontDist` relativo ao cwd (o @fastify/static exige caminho ABSOLUTO):
+    // em produção `FRONT_DIST=public` → backend/public (o dist copiado pra dentro do
+    // rootDir no build); um caminho absoluto passa direto; o default de dev fica intacto.
+    const dist = path.resolve(process.cwd(), config.frontDist ?? "../frontend/dist");
     app.register(fastifyStatic, { root: dist, wildcard: false });
   }
 

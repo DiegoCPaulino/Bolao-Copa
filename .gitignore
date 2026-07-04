@@ -5,6 +5,8 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+# Front copiado pra dentro do back no buildCommand do Render (same-origin) — artefato.
+backend/public/
 
 # Cobertura de testes
 coverage/
