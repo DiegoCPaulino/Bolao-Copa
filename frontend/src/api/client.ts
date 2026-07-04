@@ -2,7 +2,10 @@
 // componente faz `fetch` direto: tudo passa por aqui. Sempre com `credentials: "include"`
 // para o cookie de sessão (httpOnly) atravessar — o JS NÃO lê o cookie, só o envia.
 
-const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+// Base da API. Default RELATIVO `/api` (same-origin): em produção o mesmo serviço serve
+// o front e a API sob /api; em dev o proxy do Vite manda `/api` → :3000 (ver vite.config).
+// `VITE_API_URL` só é necessário para apontar a API em OUTRA origem (caso especial).
+const API_URL = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/+$/, "");
 
 /** Erro tipado a partir do corpo padronizado do backend: `{ erro: { codigo, mensagem } }`. */
 export class ApiError extends Error {
