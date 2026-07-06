@@ -104,3 +104,11 @@ export async function apagar(id: string): Promise<void> {
 export function contarIndicadosDiretos(indicadorId: string): Promise<number> {
   return prisma.participante.count({ where: { indicadorId } });
 }
+
+/**
+ * Quantos palpites o participante já tem — insumo da guarda de remoção (palpite é
+ * histórico, não se apaga em cascata). Espelha `contarPalpitesDoJogo` do rodadaRepository.
+ */
+export function contarPalpitesDoParticipante(participanteId: string): Promise<number> {
+  return prisma.palpite.count({ where: { participanteId } });
+}

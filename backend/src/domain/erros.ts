@@ -114,6 +114,17 @@ export class JogoComPalpites extends ErroDeDominio {
   }
 }
 
+/** Tentou remover um participante que já tem palpites — palpite é histórico (não se apaga
+ *  em cascata; a FK Palpite→Participante é RESTRICT). Espelha `JogoComPalpites`. A indicação
+ *  NÃO trava a remoção (FK auto-referente é SET NULL — os indicados só perdem o vínculo). */
+export class ParticipanteComPalpites extends ErroDeDominio {
+  readonly codigo = "PARTICIPANTE_COM_PALPITES";
+
+  constructor(public readonly id: string) {
+    super("Não é possível remover: o participante tem palpites registrados.");
+  }
+}
+
 /** Placar de resultado real inválido (gols devem ser inteiros >= 0). */
 export class ResultadoInvalido extends ErroDeDominio {
   readonly codigo = "RESULTADO_INVALIDO";

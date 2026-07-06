@@ -213,7 +213,7 @@ gateway/transação — ver §15); apenas mostra os números.
 ## 9. Funcionalidades principais
 
 **Participantes e pagamentos**
-1. **Gerenciar participantes** — nome, **apelido** (opcional, p/ homônimos), **indicado por** (opcional, selecionando existente), **status**, **isento** (§8.8.2) e **exibir como pago no grupo** (§8.8.1). **Sem trava:** a lista e os dados podem ser editados a qualquer momento — correções são sempre livres (§8.6).
+1. **Gerenciar participantes** — nome, **apelido** (opcional, p/ homônimos), **indicado por** (opcional, selecionando existente), **status**, **isento** (§8.8.2) e **exibir como pago no grupo** (§8.8.1). **Sem trava:** a lista e os dados podem ser editados a qualquer momento — correções são sempre livres (§8.6). **Remoção com guarda de integridade:** um participante **com palpites registrados não pode ser removido** — palpite é histórico e não se apaga em cascata; o sistema **recusa com mensagem clara** (mesma regra do **jogo com palpites**). Já a **indicação não trava** a remoção: ao remover quem indicou outros, os indicados apenas **perdem o vínculo** ("indicado por" fica vazio), não são apagados.
 2. **Buscar/filtrar/ordenar participantes** — por nome/apelido, status, valor, pontuação. (Rico na Fase 2; simples na Fase 1.)
 3. **Perfil do participante** — visão individual consolidada (ver 12.4).
 4. **Controle de pagamentos** — status, valor e **totais** (esperado/recebido/falta).

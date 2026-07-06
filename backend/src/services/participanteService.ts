@@ -2,6 +2,7 @@ import {
   IndicacaoInvalida,
   IndicadorNaoEncontrado,
   NomeObrigatorio,
+  ParticipanteComPalpites,
   ParticipanteNaoEncontrado,
 } from "../domain/erros.js";
 import type {
@@ -72,6 +73,13 @@ export async function atualizarParticipante(
 
 export async function removerParticipante(id: string): Promise<void> {
   await exigirExistente(id);
+  // Palpite é histórico (FK Palpite→Participante é RESTRICT): não se apaga em cascata.
+  // Checa AQUI (regra no domínio) e lança um erro tipado — em vez de deixar o P2003 do
+  // Prisma virar 500 genérico. Espelha `removerJogo`/`JogoComPalpites`. A indicação NÃO
+  // trava (SET NULL): um participante sem palpites deleta, e os indicados só perdem o vínculo.
+  if ((await repo.contarPalpitesDoParticipante(id)) > 0) {
+    throw new ParticipanteComPalpites(id);
+  }
   await repo.apagar(id);
 }
 

@@ -3,6 +3,7 @@ import {
   IndicacaoInvalida,
   IndicadorNaoEncontrado,
   NomeObrigatorio,
+  ParticipanteComPalpites,
   ParticipanteNaoEncontrado,
 } from "../../src/domain/erros.js";
 import * as service from "../../src/services/participanteService.js";
@@ -157,6 +158,25 @@ describe.skipIf(!temBanco)("participanteService (integração com Postgres)", ()
       await expect(service.removerParticipante("nao-existe")).rejects.toBeInstanceOf(
         ParticipanteNaoEncontrado,
       );
+    });
+
+    it("rejeita remover participante COM palpites (histórico → erro tipado, não apaga)", async () => {
+      const p = await service.criarParticipante(base);
+      const e = await prisma.selecao.create({ data: { nome: "S-e", bandeira: "🏳️" } });
+      const d = await prisma.selecao.create({ data: { nome: "S-d", bandeira: "🏳️" } });
+      const rodada = await prisma.rodada.create({ data: { fase: "OITAVAS", ordem: 1 } });
+      const jogo = await prisma.jogo.create({
+        data: { rodadaId: rodada.id, ordem: 1, selecaoEsquerdaId: e.id, selecaoDireitaId: d.id },
+      });
+      await prisma.palpite.create({
+        data: { participanteId: p.id, jogoId: jogo.id, golsEsquerda: 1, golsDireita: 0 },
+      });
+
+      await expect(service.removerParticipante(p.id)).rejects.toBeInstanceOf(
+        ParticipanteComPalpites,
+      );
+      // continua vivo — a guarda impediu o delete (não vira 500 do P2003 cru).
+      expect(await service.buscarParticipante(p.id)).not.toBeNull();
     });
 
     it("ao remover um indicador, os indicados ficam (vínculo vira null)", async () => {

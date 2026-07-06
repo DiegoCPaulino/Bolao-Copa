@@ -126,6 +126,41 @@ describe.skipIf(!temBanco)("rotas de participantes (HTTP, autenticado)", () => {
     expect(apos.statusCode).toBe(404);
   });
 
+  it("DELETE participante COM palpites → 409 (mensagem clara, não 500 do P2003)", async () => {
+    const p = (await criar({ nome: "Robson" })).json();
+    // rodada de 1 jogo (POST atômico) + um palpite do participante nesse jogo.
+    const e = await prisma.selecao.create({ data: { nome: "Se", bandeira: "🏳️" } });
+    const d = await prisma.selecao.create({ data: { nome: "Sd", bandeira: "🏳️" } });
+    const rodada = (
+      await app.inject({
+        method: "POST",
+        url: "/api/rodadas",
+        cookies: sessao,
+        payload: { fase: "OITAVAS", jogos: [{ selecaoEsquerdaId: e.id, selecaoDireitaId: d.id }] },
+      })
+    ).json() as { id: string; jogos: { id: string }[] };
+    const jogoId = rodada.jogos[0]?.id ?? "";
+    await app.inject({
+      method: "PUT",
+      url: `/api/participantes/${p.id}/rodadas/${rodada.id}/jogos/${jogoId}/palpite`,
+      cookies: sessao,
+      payload: { golsEsquerda: 1, golsDireita: 0 },
+    });
+
+    const res = await app.inject({
+      method: "DELETE",
+      url: `/api/participantes/${p.id}`,
+      cookies: sessao,
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ erro: { codigo: "PARTICIPANTE_COM_PALPITES" } });
+    // continua existindo (não foi apagado).
+    expect(
+      (await app.inject({ method: "GET", url: `/api/participantes/${p.id}`, cookies: sessao }))
+        .statusCode,
+    ).toBe(200);
+  });
+
   it("GET /export → 200 text/plain com o artefato §12.6", async () => {
     await criar({ nome: "Ana" });
     await criar({ nome: "Bruno" });

@@ -38,8 +38,9 @@ const STATUS_POR_CODIGO: Readonly<Record<string, number>> = {
   RODADA_NAO_ENCONTRADA: 404,
   JOGO_NAO_ENCONTRADO: 404,
   SELECAO_INVALIDA: 404,
-  // Conflito de estado: remover um jogo que já tem palpites (dado real) — 409.
+  // Conflito de estado: remover um jogo/participante que já tem palpites (dado real) — 409.
   JOGO_COM_PALPITES: 409,
+  PARTICIPANTE_COM_PALPITES: 409,
 };
 
 const STATUS_PADRAO_DOMINIO = 400;
